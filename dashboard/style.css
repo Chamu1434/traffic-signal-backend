@@ -1,0 +1,85 @@
+:root {
+  --red: #e74c3c;
+  --yellow: #f1c40f;
+  --green: #2ecc71;
+  --bg: #10151c;
+  --card: #1b2330;
+  --text: #e8edf3;
+  --muted: #8a97a8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 24px;
+}
+
+header { text-align: center; margin-bottom: 20px; }
+header h1 { margin: 0 0 8px; letter-spacing: 1px; }
+
+.status {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.status.connected { background: rgba(46,204,113,0.15); color: var(--green); }
+.status.disconnected { background: rgba(231,76,60,0.15); color: var(--red); }
+
+#summary {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.summary-box {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px 20px;
+  min-width: 160px;
+  text-align: center;
+}
+.summary-box .label { display: block; font-size: 12px; color: var(--muted); }
+.summary-box .value { display: block; font-size: 20px; font-weight: 700; margin-top: 4px; }
+
+#roadGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto 30px;
+}
+
+.road-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  border-top: 4px solid var(--muted);
+}
+.road-card.signal-RED { border-top-color: var(--red); }
+.road-card.signal-YELLOW { border-top-color: var(--yellow); }
+.road-card.signal-GREEN { border-top-color: var(--green); }
+
+.road-card h3 { margin: 0 0 10px; }
+.road-card .row { display: flex; justify-content: space-between; font-size: 14px; margin: 4px 0; color: var(--muted); }
+.road-card .row span:last-child { color: var(--text); font-weight: 600; }
+
+.pill { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pill.RED { background: rgba(231,76,60,0.2); color: var(--red); }
+.pill.YELLOW { background: rgba(241,196,15,0.2); color: var(--yellow); }
+.pill.GREEN { background: rgba(46,204,113,0.2); color: var(--green); }
+.pill.FAULT { background: rgba(231,76,60,0.25); color: var(--red); }
+.pill.NORMAL { background: rgba(46,204,113,0.15); color: var(--green); }
+
+#history { max-width: 1000px; margin: 0 auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 6px 10px; border-bottom: 1px solid #2a3444; text-align: center; }
+th { color: var(--muted); font-weight: 600; }
+
+footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }

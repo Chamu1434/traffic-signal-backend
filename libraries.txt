@@ -1,0 +1,6 @@
+# Wokwi Library Manager - one library name per line
+# (WiFi.h and WebServer.h are built into the ESP32 Arduino core and
+#  do NOT need to be listed here.)
+
+PubSubClient
+ArduinoJson

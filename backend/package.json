@@ -1,0 +1,19 @@
+{
+  "name": "traffic-signal-backend",
+  "version": "1.0.0",
+  "description": "Backend API + WebSocket relay for the IoT Adaptive Traffic Signal Wokwi project",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
