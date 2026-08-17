@@ -1,13 +1,3 @@
-// This file runs in your REAL browser - completely separate from the
-// Wokwi simulation. It talks to YOUR backend (backend/server.js), which
-// the ESP32 (running in Wokwi) posts status updates to over HTTP.
-//
-// If you're opening this page as a static file served BY the backend
-// itself (http://localhost:3000 or your deployed URL), leave BACKEND_URL
-// as "" - it will automatically use the page's own origin.
-// If you're opening index.html separately (e.g. double-clicking the
-// file), set BACKEND_URL to your backend's full origin, e.g.
-// "https://your-app.onrender.com".
 const BACKEND_URL = "";
 const MAX_HISTORY_ROWS = 20;
 
@@ -27,8 +17,6 @@ function wsUrl() {
   return `${base}/ws`;
 }
 
-// Load whatever the backend already has, so the page isn't empty
-// while waiting for the next ESP32 publish.
 async function loadInitial() {
   try {
     const res = await fetch(`${origin()}/api/status`);
@@ -73,6 +61,8 @@ function render(data) {
   currentPhaseEl.textContent = data.phase ?? "-";
   lastUpdateEl.textContent = new Date().toLocaleTimeString();
 
+  renderIntersection(data);
+
   roadGrid.innerHTML = "";
   (data.roads || []).forEach((r) => {
     const card = document.createElement("div");
@@ -86,6 +76,22 @@ function render(data) {
       <div class="row"><span>Sensor</span><span class="pill ${r.sensor}">${r.sensor}</span></div>
     `;
     roadGrid.appendChild(card);
+  });
+}
+
+function renderIntersection(data) {
+  (data.roads || []).forEach((r, i) => {
+    const group = document.getElementById(`light-road-${i}`);
+    if (!group) return;
+    group.querySelectorAll(".bulb").forEach((bulb) => bulb.classList.remove("on"));
+    const activeClass = (r.signal || "").toLowerCase();
+    const activeBulb = group.querySelector(`.bulb.${activeClass}`);
+    if (activeBulb) activeBulb.classList.add("on");
+
+    const countEl = document.getElementById(`count-${i}`);
+    if (countEl) {
+      countEl.textContent = `${r.vehicles} cars, ${r.waiting}s wait`;
+    }
   });
 }
 
