@@ -7,6 +7,11 @@ const currentGreenEl = document.getElementById("currentGreen");
 const currentPhaseEl = document.getElementById("currentPhase");
 const lastUpdateEl = document.getElementById("lastUpdate");
 const historyBody = document.querySelector("#historyTable tbody");
+const modeBanner = document.getElementById("modeBanner");
+const modeText = document.getElementById("modeText");
+const faultBanner = document.getElementById("faultBanner");
+const sensorHealthGrid = document.getElementById("sensorHealthGrid");
+const eventLogList = document.getElementById("eventLogList");
 
 function origin() {
   return BACKEND_URL || window.location.origin;
@@ -54,7 +59,10 @@ function render(data) {
   currentPhaseEl.textContent = data.phase ?? "-";
   lastUpdateEl.textContent = new Date().toLocaleTimeString();
 
+  renderModeAndFault(data);
   renderIntersection(data);
+  renderSensorHealth(data);
+  renderEventLog(data);
 
   roadGrid.innerHTML = "";
   (data.roads || []).forEach((r) => {
@@ -70,6 +78,16 @@ function render(data) {
     `;
     roadGrid.appendChild(card);
   });
+}
+
+function renderModeAndFault(data) {
+  const isFallback = data.systemMode === "FALLBACK_MODE";
+  modeText.textContent = `SYSTEM MODE: ${isFallback ? "FALLBACK" : "ADAPTIVE"}`;
+  modeBanner.classList.toggle("mode-fallback", isFallback);
+  modeBanner.classList.toggle("mode-adaptive", !isFallback);
+
+  const hasFault = !!data.sensorFaultDetected;
+  faultBanner.classList.toggle("hidden", !hasFault);
 }
 
 function renderIntersection(data) {
@@ -105,6 +123,40 @@ function renderIntersection(data) {
         overflowEl.classList.remove("visible");
       }
     }
+
+    const faultMarkEl = document.getElementById(`fault-${i}`);
+    if (faultMarkEl) {
+      faultMarkEl.classList.toggle("visible", r.sensor === "FAULT");
+    }
+  });
+}
+
+function renderSensorHealth(data) {
+  sensorHealthGrid.innerHTML = "";
+  (data.roads || []).forEach((r) => {
+    const item = document.createElement("div");
+    item.className = "sensor-item";
+    item.innerHTML = `
+      <span>${r.name}</span>
+      <span class="pill ${r.sensor}">${r.sensor}</span>
+    `;
+    sensorHealthGrid.appendChild(item);
+  });
+}
+
+function renderEventLog(data) {
+  const events = data.events || [];
+  eventLogList.innerHTML = "";
+  if (events.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No events yet.";
+    eventLogList.appendChild(li);
+    return;
+  }
+  events.slice().reverse().forEach((e) => {
+    const li = document.createElement("li");
+    li.textContent = e;
+    eventLogList.appendChild(li);
   });
 }
 
