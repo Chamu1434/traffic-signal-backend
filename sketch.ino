@@ -4,9 +4,17 @@
   Wokwi Simulation - ESP32
 
   Core algorithm (vehicle counting, waiting-time tracking, priority-based
-  adaptive signal control, max green time, starvation prevention, sensor
-  health monitoring) runs 100% locally and keeps working even if WiFi/MQTT
-  is unavailable. Cloud publishing is an optional add-on (see ENABLE_CLOUD).
+  adaptive signal control, max green time, starvation prevention) runs
+  100% locally and keeps working even if WiFi/backend is unavailable.
+
+  NEW MODULE: Sensor Fault Detection & Fallback (see SECTION 7A/7B/7C)
+  - SensorHealthManager   : tracks NORMAL/FAULT per road (existing fault
+                             buttons now feed this + write to the event log)
+  - FallbackSignalController : fixed 60s-per-road cycling, used ONLY while
+                             any sensor is faulty, so a faulty sensor can
+                             never bias the adaptive priority algorithm
+  The existing adaptive algorithm (SECTION 7) is untouched and behaves
+  exactly as before whenever every sensor is NORMAL.
   ===========================================================================
 */
 
@@ -14,17 +22,6 @@
 
 // ---------------------------------------------------------------------
 // 0. CLOUD FEATURE TOGGLES
-//    ENABLE_CLOUD        - master switch for WiFi. Set 0 to run the pure
-//                           local simulation first (recommended for your
-//                           first test), then turn WiFi on.
-//    ENABLE_HTTP_BACKEND - POST status as JSON to your own backend
-//                           (backend/server.js). This is the recommended
-//                           path since you control the server.
-//    ENABLE_MQTT         - alternative: publish to a public MQTT broker
-//                           instead (no backend to deploy, but the data
-//                           is visible to anyone on that broker/topic).
-//    You can enable both at once if you want to compare them; each is
-//    independent and neither one can block the local traffic algorithm.
 // ---------------------------------------------------------------------
 #define ENABLE_CLOUD        1
 #define ENABLE_HTTP_BACKEND 1
@@ -56,27 +53,38 @@ const char* ROAD_NAME[ROADS] = { "Road 1", "Road 2", "Road 3", "Road 4" };
 // ---------------------------------------------------------------------
 // 2. ALGORITHM CONFIGURATION (tune freely)
 // ---------------------------------------------------------------------
-const float DENSITY_WEIGHT              = 1.0;   // weight per vehicle
-const float WAITING_WEIGHT              = 0.5;   // weight per second waited
-const unsigned long MIN_GREEN_TIME_MS   = 5000;  // don't switch too fast
-const unsigned long MAX_GREEN_TIME_MS   = 20000; // hard cap per spec
+const float DENSITY_WEIGHT              = 1.0;
+const float WAITING_WEIGHT              = 0.5;
+const unsigned long MIN_GREEN_TIME_MS   = 5000;
+const unsigned long MAX_GREEN_TIME_MS   = 20000;
 const unsigned long YELLOW_TIME_MS      = 3000;
-const unsigned long DASHBOARD_PERIOD_MS = 1000;  // serial print / tick period
+const unsigned long DASHBOARD_PERIOD_MS = 1000;
 const unsigned long CLOUD_PERIOD_MS     = 5000;
 const unsigned long DEBOUNCE_MS         = 200;
-const int VEHICLES_SERVED_PER_GREEN     = 4;      // "cars that pass" per green phase
+const int VEHICLES_SERVED_PER_GREEN     = 4;
+
+// ---------------------------------------------------------------------
+// 2A. FALLBACK MODE CONFIGURATION (new)
+// ---------------------------------------------------------------------
+const unsigned long FALLBACK_GREEN_MS  = 60000; // exactly 60s per road, per spec
+const unsigned long FALLBACK_ALLRED_MS = 2000;  // safety all-red clearance
 
 // ---------------------------------------------------------------------
 // 3. STATE
 // ---------------------------------------------------------------------
 int  vehicleCount[ROADS]   = { 0, 0, 0, 0 };
-unsigned long waitingTime[ROADS] = { 0, 0, 0, 0 }; // seconds
-bool sensorFault[ROADS]    = { false, false, false, false };
+unsigned long waitingTime[ROADS] = { 0, 0, 0, 0 };
+bool sensorFault[ROADS]    = { false, false, false, false }; // SensorHealthManager state
 
-enum Phase { PHASE_GREEN, PHASE_YELLOW };
+enum Phase { PHASE_GREEN, PHASE_YELLOW, PHASE_ALL_RED };
 Phase phase = PHASE_GREEN;
-int currentRoad = 0;
+int currentRoad = 0; // -1 during PHASE_ALL_RED (no road is green)
 unsigned long phaseStartTime = 0;
+
+// SystemMode: which controller is driving signal selection right now
+enum SystemMode { MODE_ADAPTIVE, MODE_FALLBACK };
+SystemMode systemMode = MODE_ADAPTIVE;
+int fallbackRoadIndex = 0; // FallbackSignalController's Road1->Road2->Road3->Road4 pointer
 
 unsigned long lastTickTime = 0;
 unsigned long lastCloudTime = 0;
@@ -86,16 +94,27 @@ bool lastFaultBtnState[ROADS] = { false, false, false, false };
 unsigned long lastSensorDebounce[ROADS] = { 0, 0, 0, 0 };
 unsigned long lastFaultDebounce[ROADS]  = { 0, 0, 0, 0 };
 
+// ---------------------------------------------------------------------
+// 3A. EVENT LOG (new) - small ring buffer, newest events pushed to backend
+// ---------------------------------------------------------------------
+#define LOG_SIZE 8
+String eventLog[LOG_SIZE];
+int logHead = 0; // next slot to write (oldest entry currently here)
+
+void addEvent(const String& msg) {
+  eventLog[logHead] = msg;
+  logHead = (logHead + 1) % LOG_SIZE;
+  Serial.print("[EVENT] ");
+  Serial.println(msg);
+}
+
 #if ENABLE_CLOUD
-const char* WIFI_SSID   = "Wokwi-GUEST";  // Wokwi's built-in open network
+const char* WIFI_SSID   = "Wokwi-GUEST";
 const char* WIFI_PASS   = "";
 bool wifiEverConnected  = false;
 
 #if ENABLE_HTTP_BACKEND
-  // *** CHANGE THIS to your deployed backend URL (see backend/README.md) ***
-  // e.g. "https://your-app.onrender.com/api/status"
-  // or, for a quick local demo via ngrok: "https://xxxx.ngrok-free.app/api/status"
-  const char* BACKEND_URL = "https://YOUR-BACKEND-URL.example.com/api/status";
+  const char* BACKEND_URL = "https://traffic-signal-backend.onrender.com/api/status";
 #endif
 
 #if ENABLE_MQTT
@@ -118,11 +137,10 @@ void setup() {
     pinMode(RED_PIN[i], OUTPUT);
     pinMode(YELLOW_PIN[i], OUTPUT);
     pinMode(GREEN_PIN[i], OUTPUT);
-    pinMode(SENSOR_PIN[i], INPUT);   // external pulldown in diagram.json
-    pinMode(FAULT_PIN[i], INPUT);    // external pulldown in diagram.json
+    pinMode(SENSOR_PIN[i], INPUT);
+    pinMode(FAULT_PIN[i], INPUT);
   }
 
-  // Start with Road 1 GREEN, everyone else RED
   currentRoad = 0;
   phase = PHASE_GREEN;
   phaseStartTime = millis();
@@ -132,10 +150,10 @@ void setup() {
   Serial.println("=======================================================");
   Serial.println(" INTELLIGENT ADAPTIVE TRAFFIC SIGNAL SYSTEM - BOOT OK");
   Serial.println("=======================================================");
-  Serial.println("Press a ROAD SENSOR button in Wokwi to simulate a vehicle");
-  Serial.println("crossing the IR beam (increments vehicle count).");
-  Serial.println("Press a ROAD FAULT button to toggle that sensor's health.");
+  Serial.println("Blue button  = vehicle sensor (simulates a car crossing)");
+  Serial.println("Red button   = toggles that road's sensor fault");
   Serial.println("=======================================================");
+  addEvent("System started in ADAPTIVE_MODE.");
 
 #if ENABLE_CLOUD
   setupWiFi();
@@ -172,7 +190,7 @@ void loop() {
 }
 
 // ---------------------------------------------------------------------
-// 4. VEHICLE DETECTION  (button press = one vehicle crossing the beam)
+// 4. VEHICLE DETECTION
 // ---------------------------------------------------------------------
 void readSensorButtons(unsigned long now) {
   for (int i = 0; i < ROADS; i++) {
@@ -183,15 +201,14 @@ void readSensorButtons(unsigned long now) {
       if (!sensorFault[i]) {
         vehicleCount[i]++;
       }
-      // If the sensor is faulted, presses are ignored - a real stuck IR
-      // sensor would not register new vehicles either.
     }
     lastSensorState[i] = pressed;
   }
 }
 
 // ---------------------------------------------------------------------
-// 5. SENSOR HEALTH  (button toggles fault state on/off)
+// 5. SensorHealthManager - detects fault button presses, updates status,
+//    and logs the transition. This is the ONLY place sensorFault[] changes.
 // ---------------------------------------------------------------------
 void readFaultButtons(unsigned long now) {
   for (int i = 0; i < ROADS; i++) {
@@ -200,16 +217,25 @@ void readFaultButtons(unsigned long now) {
     if (pressed && !lastFaultBtnState[i] && (now - lastFaultDebounce[i] > DEBOUNCE_MS)) {
       lastFaultDebounce[i] = now;
       sensorFault[i] = !sensorFault[i];
-      Serial.print(">>> ");
-      Serial.print(ROAD_NAME[i]);
-      Serial.println(sensorFault[i] ? " SENSOR FAULT INJECTED" : " sensor restored to NORMAL");
+      if (sensorFault[i]) {
+        addEvent(String(ROAD_NAME[i]) + " sensor fault detected.");
+      } else {
+        addEvent(String(ROAD_NAME[i]) + " sensor restored.");
+      }
     }
     lastFaultBtnState[i] = pressed;
   }
 }
 
+bool anySensorFaulty() {
+  for (int i = 0; i < ROADS; i++) {
+    if (sensorFault[i]) return true;
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------
-// 6. WAITING TIME  (every road not currently GREEN accumulates wait)
+// 6. WAITING TIME
 // ---------------------------------------------------------------------
 void tickWaitingTimes() {
   for (int i = 0; i < ROADS; i++) {
@@ -221,54 +247,117 @@ void tickWaitingTimes() {
 }
 
 // ---------------------------------------------------------------------
-// 7. PRIORITY FORMULA
+// 7. ADAPTIVE PRIORITY FORMULA (unchanged) - a faulty road is additionally
+//    forced to the lowest possible priority as defense-in-depth, so even
+//    a stale/inflated reading from a faulty sensor cannot win selection.
 // ---------------------------------------------------------------------
 float priorityOf(int i) {
+  if (sensorFault[i]) return -1.0; // never let a faulty road win adaptively
   return (DENSITY_WEIGHT * vehicleCount[i]) + (WAITING_WEIGHT * waitingTime[i]);
 }
 
 int pickNextRoad(int excludeRoad) {
   int best = -1;
-  float bestScore = -1;
+  float bestScore = -1e9;
   for (int i = 0; i < ROADS; i++) {
-    if (i == excludeRoad) continue; // never repeat the same road immediately
+    if (i == excludeRoad) continue;
     float score = priorityOf(i);
     if (score > bestScore) {
       bestScore = score;
       best = i;
     }
   }
-  if (best == -1) best = (excludeRoad + 1) % ROADS; // fallback, all zero
+  if (best == -1) best = (excludeRoad + 1) % ROADS;
   return best;
 }
 
+bool someoneElseUrgentlyWaiting() {
+  float currentScore = priorityOf(currentRoad);
+  for (int i = 0; i < ROADS; i++) {
+    if (i == currentRoad) continue;
+    if (priorityOf(i) > currentScore + 5.0) return true;
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------
-// 8/9/10. STATE MACHINE: GREEN -> YELLOW -> next road GREEN
-//          Enforces max green time and guarantees no two roads are
-//          GREEN/YELLOW at the same time.
+// 7A/7B/7C. STATE MACHINE
+//   ADAPTIVE_MODE : GREEN -> YELLOW -> next GREEN        (original, unchanged
+//                    timing/behavior whenever no sensor is faulty)
+//   FALLBACK_MODE : GREEN(60s) -> YELLOW -> ALL_RED -> next road's GREEN
+//   Mode switches only happen at the safe boundary right after a road's
+//   YELLOW (or ALL_RED) phase completes - never abruptly mid-green.
 // ---------------------------------------------------------------------
 void runSignalStateMachine(unsigned long now) {
   unsigned long elapsed = now - phaseStartTime;
 
   if (phase == PHASE_GREEN) {
-    bool hitMax   = elapsed >= MAX_GREEN_TIME_MS;
-    bool minMet   = elapsed >= MIN_GREEN_TIME_MS;
-    bool noCars   = vehicleCount[currentRoad] == 0;
-    bool starved  = someoneElseUrgentlyWaiting();
+    if (systemMode == MODE_ADAPTIVE) {
+      bool hitMax  = elapsed >= MAX_GREEN_TIME_MS;
+      bool minMet  = elapsed >= MIN_GREEN_TIME_MS;
+      bool noCars  = vehicleCount[currentRoad] == 0;
+      bool starved = someoneElseUrgentlyWaiting();
 
-    if (hitMax || (minMet && (noCars || starved))) {
-      phase = PHASE_YELLOW;
-      phaseStartTime = now;
-      applySignals();
+      if (hitMax || (minMet && (noCars || starved))) {
+        phase = PHASE_YELLOW;
+        phaseStartTime = now;
+        applySignals();
+      }
+    } else { // MODE_FALLBACK: fixed 60s, no early exit - per spec
+      if (elapsed >= FALLBACK_GREEN_MS) {
+        phase = PHASE_YELLOW;
+        phaseStartTime = now;
+        applySignals();
+      }
     }
-  } else { // PHASE_YELLOW
+
+  } else if (phase == PHASE_YELLOW) {
     if (elapsed >= YELLOW_TIME_MS) {
-      // Serve the road: some vehicles pass, waiting resets
+      // Serve the road that just had green (common to both modes)
       int served = min(vehicleCount[currentRoad], VEHICLES_SERVED_PER_GREEN);
       vehicleCount[currentRoad] -= served;
       waitingTime[currentRoad] = 0;
 
-      int next = pickNextRoad(currentRoad);
+      // Safe boundary: check whether a mode switch is needed
+      if (systemMode == MODE_ADAPTIVE && anySensorFaulty()) {
+        systemMode = MODE_FALLBACK;
+        fallbackRoadIndex = 0;
+        addEvent("Adaptive priority disabled.");
+        addEvent("System switched to fallback mode.");
+      }
+
+      if (systemMode == MODE_FALLBACK) {
+        // Insert a safety ALL-RED clearance before the next road's green
+        currentRoad = -1;
+        phase = PHASE_ALL_RED;
+        phaseStartTime = now;
+        applySignals();
+      } else {
+        int next = pickNextRoad(currentRoad);
+        currentRoad = next;
+        phase = PHASE_GREEN;
+        phaseStartTime = now;
+        applySignals();
+      }
+    }
+
+  } else { // PHASE_ALL_RED (fallback only)
+    if (elapsed >= FALLBACK_ALLRED_MS) {
+      // Safe boundary: allowed to return to adaptive mode here
+      if (systemMode == MODE_FALLBACK && !anySensorFaulty()) {
+        systemMode = MODE_ADAPTIVE;
+        addEvent("Sensor validation successful.");
+        addEvent("Adaptive priority resumed.");
+      }
+
+      int next;
+      if (systemMode == MODE_FALLBACK) {
+        next = fallbackRoadIndex;
+        fallbackRoadIndex = (fallbackRoadIndex + 1) % ROADS;
+        addEvent(String(ROAD_NAME[next]) + " assigned 60-second GREEN.");
+      } else {
+        next = pickNextRoad(-1); // first pick after returning to adaptive
+      }
       currentRoad = next;
       phase = PHASE_GREEN;
       phaseStartTime = now;
@@ -277,24 +366,13 @@ void runSignalStateMachine(unsigned long now) {
   }
 }
 
-// Fairness / starvation guard: if some other road's priority has grown
-// well past the current road's, cut the current green short (still
-// respecting MIN_GREEN_TIME_MS above).
-bool someoneElseUrgentlyWaiting() {
-  float currentScore = priorityOf(currentRoad);
-  for (int i = 0; i < ROADS; i++) {
-    if (i == currentRoad) continue;
-    if (priorityOf(i) > currentScore + 5.0) return true; // margin avoids flapping
-  }
-  return false;
-}
-
 // ---------------------------------------------------------------------
-// APPLY LEDS  (never allow conflicting greens)
+// APPLY LEDS - never allow conflicting greens. currentRoad == -1 means
+// every road is RED (used during the fallback ALL_RED clearance phase).
 // ---------------------------------------------------------------------
 void applySignals() {
   for (int i = 0; i < ROADS; i++) {
-    bool isCurrent = (i == currentRoad);
+    bool isCurrent = (currentRoad >= 0 && i == currentRoad);
     digitalWrite(RED_PIN[i],    isCurrent ? LOW  : HIGH);
     digitalWrite(YELLOW_PIN[i], (isCurrent && phase == PHASE_YELLOW) ? HIGH : LOW);
     digitalWrite(GREEN_PIN[i],  (isCurrent && phase == PHASE_GREEN)  ? HIGH : LOW);
@@ -302,14 +380,16 @@ void applySignals() {
 }
 
 // ---------------------------------------------------------------------
-// 11/12. SERIAL DASHBOARD
+// 8/9. SERIAL DASHBOARD
 // ---------------------------------------------------------------------
 void printDashboard() {
-  unsigned long greenElapsed = (millis() - phaseStartTime) / 1000;
+  unsigned long stateElapsed = (millis() - phaseStartTime) / 1000;
 
   Serial.println();
   Serial.println("========================================");
   Serial.println("       INTELLIGENT TRAFFIC SYSTEM");
+  Serial.print("SYSTEM MODE: ");
+  Serial.println(systemMode == MODE_ADAPTIVE ? "ADAPTIVE_MODE" : "FALLBACK_MODE");
   Serial.println("========================================");
 
   for (int i = 0; i < ROADS; i++) {
@@ -323,20 +403,20 @@ void printDashboard() {
   }
 
   Serial.print("Current Green Road: ");
-  Serial.println(String(ROAD_NAME[currentRoad]) + (phase == PHASE_YELLOW ? " (YELLOW/clearing)" : ""));
-  Serial.print("Green Time: "); Serial.print(greenElapsed); Serial.println(" sec");
+  Serial.println(currentRoad >= 0 ? ROAD_NAME[currentRoad] : "(none - ALL RED)");
+  Serial.print("Phase: ");
+  Serial.println(phase == PHASE_GREEN ? "GREEN" : (phase == PHASE_YELLOW ? "YELLOW" : "ALL_RED"));
+  Serial.print("Time in phase: "); Serial.print(stateElapsed); Serial.println(" sec");
   Serial.println("========================================");
 }
 
 String signalTextFor(int i) {
   if (i != currentRoad) return "RED";
-  return (phase == PHASE_GREEN) ? "GREEN" : "YELLOW";
+  return (phase == PHASE_GREEN) ? "GREEN" : (phase == PHASE_YELLOW ? "YELLOW" : "RED");
 }
 
 // ---------------------------------------------------------------------
-// 15. CLOUD (optional) - WiFi + HTTP backend and/or MQTT broker
-//     This block never blocks the main loop and never stops the local
-//     traffic control algorithm if it fails or if WiFi is unavailable.
+// 10. CLOUD (optional) - WiFi + HTTP backend and/or MQTT broker
 // ---------------------------------------------------------------------
 #if ENABLE_CLOUD
 void setupWiFi() {
@@ -347,9 +427,7 @@ void setupWiFi() {
 }
 
 void maintainCloudConnection() {
-  if (WiFi.status() != WL_CONNECTED) {
-    return; // don't block; local algorithm keeps running regardless
-  }
+  if (WiFi.status() != WL_CONNECTED) return;
   if (!wifiEverConnected) {
     wifiEverConnected = true;
     Serial.print("WiFi connected. IP: ");
@@ -364,9 +442,8 @@ void maintainCloudConnection() {
 #endif
 }
 
-// Builds the shared JSON status payload used by both HTTP and MQTT.
 size_t buildStatusJson(char* buffer, size_t bufferSize) {
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<1024> doc;
   JsonArray roads = doc.createNestedArray("roads");
   for (int i = 0; i < ROADS; i++) {
     JsonObject r = roads.createNestedObject();
@@ -377,8 +454,16 @@ size_t buildStatusJson(char* buffer, size_t bufferSize) {
     r["signal"]   = signalTextFor(i);
     r["sensor"]   = sensorFault[i] ? "FAULT" : "NORMAL";
   }
-  doc["currentGreen"] = ROAD_NAME[currentRoad];
-  doc["phase"]        = (phase == PHASE_GREEN) ? "GREEN" : "YELLOW";
+  doc["currentGreen"] = currentRoad >= 0 ? ROAD_NAME[currentRoad] : "NONE";
+  doc["phase"]        = (phase == PHASE_GREEN) ? "GREEN" : (phase == PHASE_YELLOW ? "YELLOW" : "ALL_RED");
+  doc["systemMode"]   = systemMode == MODE_ADAPTIVE ? "ADAPTIVE_MODE" : "FALLBACK_MODE";
+  doc["sensorFaultDetected"] = anySensorFaulty();
+
+  JsonArray events = doc.createNestedArray("events");
+  for (int k = 0; k < LOG_SIZE; k++) {
+    int idx = (logHead + k) % LOG_SIZE;
+    if (eventLog[idx].length() > 0) events.add(eventLog[idx]);
+  }
 
   return serializeJson(doc, buffer, bufferSize);
 }
@@ -386,7 +471,7 @@ size_t buildStatusJson(char* buffer, size_t bufferSize) {
 void publishStatus() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  char buffer[512];
+  char buffer[1024];
   size_t n = buildStatusJson(buffer, sizeof(buffer));
 
 #if ENABLE_HTTP_BACKEND
