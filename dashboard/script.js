@@ -1,7 +1,7 @@
 const BACKEND_URL = "";
 const MAX_HISTORY_ROWS = 20;
+const MAX_CAR_ICONS = 5;
 
-const statusEl = document.getElementById("connectionStatus");
 const roadGrid = document.getElementById("roadGrid");
 const currentGreenEl = document.getElementById("currentGreen");
 const currentPhaseEl = document.getElementById("currentPhase");
@@ -30,14 +30,7 @@ async function loadInitial() {
 function connect() {
   const ws = new WebSocket(wsUrl());
 
-  ws.onopen = () => {
-    statusEl.textContent = "Connected to backend";
-    statusEl.className = "status connected";
-  };
-
   ws.onclose = () => {
-    statusEl.textContent = "Disconnected - retrying...";
-    statusEl.className = "status disconnected";
     setTimeout(connect, 2000);
   };
 
@@ -83,6 +76,7 @@ function renderIntersection(data) {
   (data.roads || []).forEach((r, i) => {
     const group = document.getElementById(`light-road-${i}`);
     if (!group) return;
+
     group.querySelectorAll(".bulb").forEach((bulb) => bulb.classList.remove("on"));
     const activeClass = (r.signal || "").toLowerCase();
     const activeBulb = group.querySelector(`.bulb.${activeClass}`);
@@ -91,6 +85,25 @@ function renderIntersection(data) {
     const countEl = document.getElementById(`count-${i}`);
     if (countEl) {
       countEl.textContent = `${r.vehicles} cars, ${r.waiting}s wait`;
+    }
+
+    const vehicles = Number(r.vehicles) || 0;
+    for (let j = 0; j < MAX_CAR_ICONS; j++) {
+      const carEl = document.getElementById(`car-${i}-${j}`);
+      if (!carEl) continue;
+      carEl.classList.toggle("visible", j < vehicles);
+    }
+
+    const overflowEl = document.getElementById(`overflow-${i}`);
+    if (overflowEl) {
+      const extra = vehicles - MAX_CAR_ICONS;
+      if (extra > 0) {
+        overflowEl.textContent = `+${extra}`;
+        overflowEl.classList.add("visible");
+      } else {
+        overflowEl.textContent = "";
+        overflowEl.classList.remove("visible");
+      }
     }
   });
 }
