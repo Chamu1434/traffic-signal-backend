@@ -1,6 +1,7 @@
 const BACKEND_URL = "";
 const MAX_HISTORY_ROWS = 20;
 const MAX_CAR_ICONS = 5;
+const MAX_SIM_CARS = 12;
 
 const roadGrid = document.getElementById("roadGrid");
 const currentGreenEl = document.getElementById("currentGreen");
@@ -61,6 +62,7 @@ function render(data) {
 
   renderModeAndFault(data);
   renderIntersection(data);
+  renderLiveSim(data);
   renderSensorHealth(data);
   renderEventLog(data);
 
@@ -128,6 +130,33 @@ function renderIntersection(data) {
     if (faultMarkEl) {
       faultMarkEl.classList.toggle("visible", r.sensor === "FAULT");
     }
+  });
+}
+
+function renderLiveSim(data) {
+  const junction = document.getElementById("ls-junction");
+  const isMoving = data.phase === "GREEN";
+  junction.classList.toggle("active", isMoving);
+
+  (data.roads || []).forEach((r, i) => {
+    const lane = document.getElementById(`ls-lane-${i}`);
+    if (!lane) return;
+    lane.classList.add(`road-${i}`);
+
+    const vehicles = Math.min(Number(r.vehicles) || 0, MAX_SIM_CARS);
+
+    // Reuse existing car divs where possible, add/remove as needed
+    let cars = lane.querySelectorAll(".sim-car");
+    while (cars.length < MAX_SIM_CARS) {
+      const car = document.createElement("div");
+      car.className = "sim-car";
+      lane.appendChild(car);
+      cars = lane.querySelectorAll(".sim-car");
+    }
+
+    cars.forEach((car, j) => {
+      car.classList.toggle("visible", j < vehicles);
+    });
   });
 }
 
