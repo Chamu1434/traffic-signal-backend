@@ -1,234 +1,428 @@
-:root {
-    --bg: #080e17;
-    --panel: #111b29;
-    --panel2: #162235;
+<!DOCTYPE html>
+<html lang="en">
 
-    --road: #252f3d;
-    --road-line: #68778c;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    --text: #f1f5f9;
-    --muted: #8d9aab;
+    <title>Smart Traffic Signal</title>
 
-    --red: #ff3b30;
-    --yellow: #ffd21c;
-    --green: #20d85a;
+    <link rel="stylesheet" href="style.css">
+</head>
 
-    --border: #263449;
-}
+<body>
 
-* {
-    box-sizing: border-box;
-}
+<!-- ================= HEADER ================= -->
 
-body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: Arial, Helvetica, sans-serif;
-}
+<header class="header">
 
+    <div class="brand">
 
-/* ================= HEADER ================= */
+        <div class="traffic-logo">
+            <span class="logo-red"></span>
+            <span class="logo-yellow"></span>
+            <span class="logo-green"></span>
+        </div>
 
-.top-header {
-    min-height: 90px;
-    padding: 16px 30px;
+        <div>
+            <h1>SMART TRAFFIC SIGNAL</h1>
+            <p>Live Traffic Monitoring Dashboard</p>
+        </div>
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    </div>
 
-    border-bottom: 1px solid var(--border);
-}
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
+    <div class="header-right">
 
-.brand h1 {
-    margin: 0;
-    font-size: 25px;
-    letter-spacing: 1px;
-}
+        <div class="header-box">
+            <span class="header-icon">⌁</span>
 
-.brand p {
-    margin: 5px 0 0;
-    color: var(--green);
-    font-size: 14px;
-}
+            <div>
+                <strong id="connectionStatus">
+                    Connected
+                </strong>
 
+                <small>ESP32</small>
+            </div>
+        </div>
 
-/* Traffic logo */
 
-.traffic-logo {
-    width: 32px;
-    height: 58px;
+        <div class="header-box">
 
-    padding: 7px;
+            <span class="header-icon">◷</span>
 
-    background: #172131;
-    border-radius: 8px;
+            <div>
+                <strong id="clock">
+                    --:--:--
+                </strong>
 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
+                <small id="date">
+                    --
+                </small>
+            </div>
 
-.traffic-logo span {
-    width: 13px;
-    height: 13px;
+        </div>
 
-    border-radius: 50%;
 
-    margin: auto;
-}
+        <div class="header-box">
 
-.logo-red {
-    background: var(--red);
-}
+            <span class="header-icon green-text">
+                ◉
+            </span>
 
-.logo-yellow {
-    background: var(--yellow);
-}
+            <div>
 
-.logo-green {
-    background: var(--green);
-}
+                <strong class="green-text">
+                    SYSTEM ACTIVE
+                </strong>
 
+                <small>
+                    Adaptive Mode
+                </small>
 
-/* ================= HEADER INFO ================= */
+            </div>
 
-.system-info {
-    display: flex;
-    gap: 12px;
-}
+        </div>
 
-.info-box {
-    min-width: 140px;
+    </div>
 
-    padding: 10px 14px;
+</header>
 
-    border: 1px solid var(--border);
-    border-radius: 9px;
 
-    display: flex;
-    align-items: center;
-    gap: 10px;
+<!-- ================= FAULT ================= -->
 
-    background: rgba(15, 25, 40, 0.8);
-}
+<section id="faultBanner" class="fault-banner hidden">
 
-.info-box strong {
-    display: block;
-    font-size: 14px;
-}
+    ⚠ Sensor fault detected —
+    system running on fixed-cycle fallback
 
-.info-box small {
-    display: block;
-    color: var(--muted);
-    margin-top: 3px;
-}
+</section>
 
-.wifi-icon,
-.power-icon {
-    font-size: 25px;
-    color: var(--green);
-}
 
+<!-- ================= MAIN ================= -->
 
-/* ================= DASHBOARD ================= */
+<main class="main-container">
 
-.dashboard {
-    padding: 20px;
 
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
+    <!-- LEFT SIDE -->
 
-    max-width: 1550px;
-    margin: auto;
-}
+    <section class="left-side">
 
 
-/* ================= INTERSECTION ================= */
+        <!-- INTERSECTION -->
 
-.intersection-card {
-    background: var(--panel);
+        <div class="intersection-card">
 
-    border: 1px solid var(--border);
+            <div class="intersection">
 
-    border-radius: 12px;
+                <!-- ROAD 1 -->
 
-    padding: 14px;
-}
+                <div class="road road-top">
 
+                    <div class="road-label top-label">
+                        Road 1
+                    </div>
 
-.intersection {
-    position: relative;
+                    <div
+                        id="cars-0"
+                        class="car-container cars-top">
+                    </div>
 
-    width: 100%;
-    aspect-ratio: 1.45;
+                    <div
+                        id="light-0"
+                        class="traffic-light light-top">
 
-    min-height: 550px;
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
 
-    overflow: hidden;
+                    </div>
 
-    border-radius: 9px;
+                    <div
+                        id="count-0"
+                        class="road-count count-top">
 
-    background:
-        radial-gradient(circle at 20% 20%, #1d4624 0 12%, transparent 13%),
-        radial-gradient(circle at 85% 25%, #214c28 0 10%, transparent 11%),
-        radial-gradient(circle at 20% 80%, #1d4624 0 12%, transparent 13%),
-        radial-gradient(circle at 85% 80%, #214c28 0 11%, transparent 12%),
-        #13251a;
-}
+                        0 cars
 
+                    </div>
 
-/* Roads */
+                </div>
 
-.road {
-    position: absolute;
 
-    background: var(--road);
 
-    overflow: visible;
-}
+                <!-- ROAD 2 -->
 
+                <div class="road road-right">
 
-/* vertical */
+                    <div class="road-label right-label">
+                        Road 2
+                    </div>
 
-.road-top,
-.road-bottom {
-    left: 40%;
-    width: 20%;
-    height: 100%;
-}
+                    <div
+                        id="cars-1"
+                        class="car-container cars-right">
+                    </div>
 
+                    <div
+                        id="light-1"
+                        class="traffic-light light-right">
 
-/* horizontal */
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
 
-.road-left,
-.road-right {
-    top: 40%;
-    height: 20%;
-    width: 100%;
-}
+                    </div>
 
+                    <div
+                        id="count-1"
+                        class="road-count count-right">
 
-/* lane markings */
+                        0 cars
 
-.road-top::after,
-.road-bottom::after {
-    content: "";
+                    </div>
 
-    position: absolute;
+                </div>
 
-    top: 0;
-    left: 50%;
 
-    height: 100%;
-    width: 4px;
 
-   
+                <!-- ROAD 3 -->
+
+                <div class="road road-bottom">
+
+                    <div class="road-label bottom-label">
+                        Road 3
+                    </div>
+
+                    <div
+                        id="cars-2"
+                        class="car-container cars-bottom">
+                    </div>
+
+                    <div
+                        id="light-2"
+                        class="traffic-light light-bottom">
+
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
+
+                    </div>
+
+                    <div
+                        id="count-2"
+                        class="road-count count-bottom">
+
+                        0 cars
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- ROAD 4 -->
+
+                <div class="road road-left">
+
+                    <div class="road-label left-label">
+                        Road 4
+                    </div>
+
+                    <div
+                        id="cars-3"
+                        class="car-container cars-left">
+                    </div>
+
+                    <div
+                        id="light-3"
+                        class="traffic-light light-left">
+
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
+
+                    </div>
+
+                    <div
+                        id="count-3"
+                        class="road-count count-left">
+
+                        0 cars
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- CENTER -->
+
+                <div class="junction">
+
+                    <div class="junction-text">
+                        SMART<br>
+                        TRAFFIC
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SYSTEM STATUS -->
+
+        <div class="bottom-card">
+
+            <h2>SYSTEM STATUS</h2>
+
+            <div class="status-row">
+
+                <span>
+                    ◉ Connection
+                </span>
+
+                <strong
+                    id="systemConnection"
+                    class="green-text">
+
+                    Connected
+
+                </strong>
+
+            </div>
+
+
+            <div class="status-row">
+
+                <span>
+                    ⚙ Mode
+                </span>
+
+                <strong id="systemMode">
+                    Adaptive
+                </strong>
+
+            </div>
+
+
+            <div class="status-row">
+
+                <span>
+                    ◷ Uptime
+                </span>
+
+                <strong id="uptime">
+                    --
+                </strong>
+
+            </div>
+
+
+            <div class="status-row">
+
+                <span>
+                    ↻ Last Update
+                </span>
+
+                <strong id="lastUpdate">
+                    Just now
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- RIGHT SIDE -->
+
+    <section class="right-side">
+
+        <div id="roadGrid"></div>
+
+    </section>
+
+</main>
+
+
+
+<!-- ================= BOTTOM ================= -->
+
+<section class="bottom-grid">
+
+
+    <!-- EVENTS -->
+
+    <div class="bottom-panel">
+
+        <h2>
+            RECENT EVENTS
+        </h2>
+
+        <ul id="eventLogList"></ul>
+
+    </div>
+
+
+
+    <!-- HISTORY -->
+
+    <div class="bottom-panel">
+
+        <h2>
+            TRAFFIC HISTORY
+            <span class="small-title">
+                (Last 20 Changes)
+            </span>
+        </h2>
+
+        <table id="historyTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Time</th>
+                    <th>Road 1</th>
+                    <th>Road 2</th>
+                    <th>Road 3</th>
+                    <th>Road 4</th>
+                    <th>Green</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody></tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+
+<footer>
+
+    Smart Traffic Signal System
+    |
+    ESP32
+    |
+    Wokwi
+    |
+    Adaptive Traffic Control
+
+</footer>
+
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
