@@ -1,428 +1,110 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Smart Traffic Signal</title>
-
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
-<!-- ================= HEADER ================= -->
-
-<header class="header">
-
-    <div class="brand">
-
-        <div class="traffic-logo">
-            <span class="logo-red"></span>
-            <span class="logo-yellow"></span>
-            <span class="logo-green"></span>
-        </div>
-
-        <div>
-            <h1>SMART TRAFFIC SIGNAL</h1>
-            <p>Live Traffic Monitoring Dashboard</p>
-        </div>
-
-    </div>
-
-
-    <div class="header-right">
-
-        <div class="header-box">
-            <span class="header-icon">⌁</span>
-
-            <div>
-                <strong id="connectionStatus">
-                    Connected
-                </strong>
-
-                <small>ESP32</small>
-            </div>
-        </div>
-
-
-        <div class="header-box">
-
-            <span class="header-icon">◷</span>
-
-            <div>
-                <strong id="clock">
-                    --:--:--
-                </strong>
-
-                <small id="date">
-                    --
-                </small>
-            </div>
-
-        </div>
-
-
-        <div class="header-box">
-
-            <span class="header-icon green-text">
-                ◉
-            </span>
-
-            <div>
-
-                <strong class="green-text">
-                    SYSTEM ACTIVE
-                </strong>
-
-                <small>
-                    Adaptive Mode
-                </small>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</header>
-
-
-<!-- ================= FAULT ================= -->
-
-<section id="faultBanner" class="fault-banner hidden">
-
-    ⚠ Sensor fault detected —
-    system running on fixed-cycle fallback
-
-</section>
-
-
-<!-- ================= MAIN ================= -->
-
-<main class="main-container">
-
-
-    <!-- LEFT SIDE -->
-
-    <section class="left-side">
-
-
-        <!-- INTERSECTION -->
-
-        <div class="intersection-card">
-
-            <div class="intersection">
-
-                <!-- ROAD 1 -->
-
-                <div class="road road-top">
-
-                    <div class="road-label top-label">
-                        Road 1
-                    </div>
-
-                    <div
-                        id="cars-0"
-                        class="car-container cars-top">
-                    </div>
-
-                    <div
-                        id="light-0"
-                        class="traffic-light light-top">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-0"
-                        class="road-count count-top">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- ROAD 2 -->
-
-                <div class="road road-right">
-
-                    <div class="road-label right-label">
-                        Road 2
-                    </div>
-
-                    <div
-                        id="cars-1"
-                        class="car-container cars-right">
-                    </div>
-
-                    <div
-                        id="light-1"
-                        class="traffic-light light-right">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-1"
-                        class="road-count count-right">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- ROAD 3 -->
-
-                <div class="road road-bottom">
-
-                    <div class="road-label bottom-label">
-                        Road 3
-                    </div>
-
-                    <div
-                        id="cars-2"
-                        class="car-container cars-bottom">
-                    </div>
-
-                    <div
-                        id="light-2"
-                        class="traffic-light light-bottom">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-2"
-                        class="road-count count-bottom">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- ROAD 4 -->
-
-                <div class="road road-left">
-
-                    <div class="road-label left-label">
-                        Road 4
-                    </div>
-
-                    <div
-                        id="cars-3"
-                        class="car-container cars-left">
-                    </div>
-
-                    <div
-                        id="light-3"
-                        class="traffic-light light-left">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-3"
-                        class="road-count count-left">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- CENTER -->
-
-                <div class="junction">
-
-                    <div class="junction-text">
-                        SMART<br>
-                        TRAFFIC
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- SYSTEM STATUS -->
-
-        <div class="bottom-card">
-
-            <h2>SYSTEM STATUS</h2>
-
-            <div class="status-row">
-
-                <span>
-                    ◉ Connection
-                </span>
-
-                <strong
-                    id="systemConnection"
-                    class="green-text">
-
-                    Connected
-
-                </strong>
-
-            </div>
-
-
-            <div class="status-row">
-
-                <span>
-                    ⚙ Mode
-                </span>
-
-                <strong id="systemMode">
-                    Adaptive
-                </strong>
-
-            </div>
-
-
-            <div class="status-row">
-
-                <span>
-                    ◷ Uptime
-                </span>
-
-                <strong id="uptime">
-                    --
-                </strong>
-
-            </div>
-
-
-            <div class="status-row">
-
-                <span>
-                    ↻ Last Update
-                </span>
-
-                <strong id="lastUpdate">
-                    Just now
-                </strong>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- RIGHT SIDE -->
-
-    <section class="right-side">
-
-        <div id="roadGrid"></div>
-
-    </section>
-
-</main>
-
-
-
-<!-- ================= BOTTOM ================= -->
-
-<section class="bottom-grid">
-
-
-    <!-- EVENTS -->
-
-    <div class="bottom-panel">
-
-        <h2>
-            RECENT EVENTS
-        </h2>
-
-        <ul id="eventLogList"></ul>
-
-    </div>
-
-
-
-    <!-- HISTORY -->
-
-    <div class="bottom-panel">
-
-        <h2>
-            TRAFFIC HISTORY
-            <span class="small-title">
-                (Last 20 Changes)
-            </span>
-        </h2>
-
-        <table id="historyTable">
-
-            <thead>
-
-                <tr>
-
-                    <th>Time</th>
-                    <th>Road 1</th>
-                    <th>Road 2</th>
-                    <th>Road 3</th>
-                    <th>Road 4</th>
-                    <th>Green</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody></tbody>
-
-        </table>
-
-    </div>
-
-</section>
-
-
-
-<footer>
-
-    Smart Traffic Signal System
-    |
-    ESP32
-    |
-    Wokwi
-    |
-    Adaptive Traffic Control
-
-</footer>
-
-
-<script src="script.js"></script>
-
-</body>
-
-</html>
+// This file runs in your REAL browser - completely separate from the
+// Wokwi simulation. It talks to YOUR backend (backend/server.js), which
+// the ESP32 (running in Wokwi) posts status updates to over HTTP.
+//
+// If you're opening this page as a static file served BY the backend
+// itself (http://localhost:3000 or your deployed URL), leave BACKEND_URL
+// as "" - it will automatically use the page's own origin.
+// If you're opening index.html separately (e.g. double-clicking the
+// file), set BACKEND_URL to your backend's full origin, e.g.
+// "https://your-app.onrender.com".
+const BACKEND_URL = "";
+const MAX_HISTORY_ROWS = 20;
+
+const statusEl = document.getElementById("connectionStatus");
+const roadGrid = document.getElementById("roadGrid");
+const currentGreenEl = document.getElementById("currentGreen");
+const currentPhaseEl = document.getElementById("currentPhase");
+const lastUpdateEl = document.getElementById("lastUpdate");
+const historyBody = document.querySelector("#historyTable tbody");
+
+function origin() {
+  return BACKEND_URL || window.location.origin;
+}
+
+function wsUrl() {
+  const base = origin().replace(/^http/, "ws");
+  return `${base}/ws`;
+}
+
+// Load whatever the backend already has, so the page isn't empty
+// while waiting for the next ESP32 publish.
+async function loadInitial() {
+  try {
+    const res = await fetch(`${origin()}/api/status`);
+    const data = await res.json();
+    if (data && data.roads) render(data);
+  } catch (e) {
+    console.warn("Could not load initial status", e);
+  }
+}
+
+function connect() {
+  const ws = new WebSocket(wsUrl());
+
+  ws.onopen = () => {
+    statusEl.textContent = "Connected to backend";
+    statusEl.className = "status connected";
+  };
+
+  ws.onclose = () => {
+    statusEl.textContent = "Disconnected - retrying...";
+    statusEl.className = "status disconnected";
+    setTimeout(connect, 2000);
+  };
+
+  ws.onerror = () => ws.close();
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "status" && msg.data) {
+        render(msg.data);
+        addHistoryRow(msg.data);
+      }
+    } catch (e) {
+      console.error("Bad message", e);
+    }
+  };
+}
+
+function render(data) {
+  currentGreenEl.textContent = data.currentGreen ?? "-";
+  currentPhaseEl.textContent = data.phase ?? "-";
+  lastUpdateEl.textContent = new Date().toLocaleTimeString();
+
+  roadGrid.innerHTML = "";
+  (data.roads || []).forEach((r) => {
+    const card = document.createElement("div");
+    card.className = `road-card signal-${r.signal}`;
+    card.innerHTML = `
+      <h3>${r.name}</h3>
+      <div class="row"><span>Vehicles</span><span>${r.vehicles}</span></div>
+      <div class="row"><span>Waiting</span><span>${r.waiting} sec</span></div>
+      <div class="row"><span>Priority</span><span>${Number(r.priority).toFixed(1)}</span></div>
+      <div class="row"><span>Signal</span><span class="pill ${r.signal}">${r.signal}</span></div>
+      <div class="row"><span>Sensor</span><span class="pill ${r.sensor}">${r.sensor}</span></div>
+    `;
+    roadGrid.appendChild(card);
+  });
+}
+
+function addHistoryRow(data) {
+  const roads = data.roads || [];
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${new Date().toLocaleTimeString()}</td>
+    <td>${roads[0]?.vehicles ?? "-"}</td>
+    <td>${roads[1]?.vehicles ?? "-"}</td>
+    <td>${roads[2]?.vehicles ?? "-"}</td>
+    <td>${roads[3]?.vehicles ?? "-"}</td>
+    <td>${data.currentGreen ?? "-"}</td>
+  `;
+  historyBody.prepend(tr);
+  while (historyBody.rows.length > MAX_HISTORY_ROWS) {
+    historyBody.deleteRow(historyBody.rows.length - 1);
+  }
+}
+
+loadInitial();
+connect();
