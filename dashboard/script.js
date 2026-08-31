@@ -1,18 +1,22 @@
+// This file runs in your REAL browser - completely separate from the
+// Wokwi simulation. It talks to YOUR backend (backend/server.js), which
+// the ESP32 (running in Wokwi) posts status updates to over HTTP.
+//
+// If you're opening this page as a static file served BY the backend
+// itself (http://localhost:3000 or your deployed URL), leave BACKEND_URL
+// as "" - it will automatically use the page's own origin.
+// If you're opening index.html separately (e.g. double-clicking the
+// file), set BACKEND_URL to your backend's full origin, e.g.
+// "https://your-app.onrender.com".
 const BACKEND_URL = "";
 const MAX_HISTORY_ROWS = 20;
-const MAX_CAR_ICONS = 5;
-const MAX_SIM_CARS = 12;
 
+const statusEl = document.getElementById("connectionStatus");
 const roadGrid = document.getElementById("roadGrid");
 const currentGreenEl = document.getElementById("currentGreen");
 const currentPhaseEl = document.getElementById("currentPhase");
 const lastUpdateEl = document.getElementById("lastUpdate");
 const historyBody = document.querySelector("#historyTable tbody");
-const modeBanner = document.getElementById("modeBanner");
-const modeText = document.getElementById("modeText");
-const faultBanner = document.getElementById("faultBanner");
-const sensorHealthGrid = document.getElementById("sensorHealthGrid");
-const eventLogList = document.getElementById("eventLogList");
 
 function origin() {
   return BACKEND_URL || window.location.origin;
@@ -23,6 +27,8 @@ function wsUrl() {
   return `${base}/ws`;
 }
 
+// Load whatever the backend already has, so the page isn't empty
+// while waiting for the next ESP32 publish.
 async function loadInitial() {
   try {
     const res = await fetch(`${origin()}/api/status`);
@@ -36,7 +42,14 @@ async function loadInitial() {
 function connect() {
   const ws = new WebSocket(wsUrl());
 
+  ws.onopen = () => {
+    statusEl.textContent = "Connected to backend";
+    statusEl.className = "status connected";
+  };
+
   ws.onclose = () => {
+    statusEl.textContent = "Disconnected - retrying...";
+    statusEl.className = "status disconnected";
     setTimeout(connect, 2000);
   };
 
@@ -60,12 +73,6 @@ function render(data) {
   currentPhaseEl.textContent = data.phase ?? "-";
   lastUpdateEl.textContent = new Date().toLocaleTimeString();
 
-  renderModeAndFault(data);
-  renderIntersection(data);
-  renderLiveSim(data);
-  renderSensorHealth(data);
-  renderEventLog(data);
-
   roadGrid.innerHTML = "";
   (data.roads || []).forEach((r) => {
     const card = document.createElement("div");
@@ -79,113 +86,6 @@ function render(data) {
       <div class="row"><span>Sensor</span><span class="pill ${r.sensor}">${r.sensor}</span></div>
     `;
     roadGrid.appendChild(card);
-  });
-}
-
-function renderModeAndFault(data) {
-  const isFallback = data.systemMode === "FALLBACK_MODE";
-  modeText.textContent = `SYSTEM MODE: ${isFallback ? "FALLBACK" : "ADAPTIVE"}`;
-  modeBanner.classList.toggle("mode-fallback", isFallback);
-  modeBanner.classList.toggle("mode-adaptive", !isFallback);
-
-  const hasFault = !!data.sensorFaultDetected;
-  faultBanner.classList.toggle("hidden", !hasFault);
-}
-
-function renderIntersection(data) {
-  (data.roads || []).forEach((r, i) => {
-    const group = document.getElementById(`light-road-${i}`);
-    if (!group) return;
-
-    group.querySelectorAll(".bulb").forEach((bulb) => bulb.classList.remove("on"));
-    const activeClass = (r.signal || "").toLowerCase();
-    const activeBulb = group.querySelector(`.bulb.${activeClass}`);
-    if (activeBulb) activeBulb.classList.add("on");
-
-    const countEl = document.getElementById(`count-${i}`);
-    if (countEl) {
-      countEl.textContent = `${r.vehicles} cars, ${r.waiting}s wait`;
-    }
-
-    const vehicles = Number(r.vehicles) || 0;
-    for (let j = 0; j < MAX_CAR_ICONS; j++) {
-      const carEl = document.getElementById(`car-${i}-${j}`);
-      if (!carEl) continue;
-      carEl.classList.toggle("visible", j < vehicles);
-    }
-
-    const overflowEl = document.getElementById(`overflow-${i}`);
-    if (overflowEl) {
-      const extra = vehicles - MAX_CAR_ICONS;
-      if (extra > 0) {
-        overflowEl.textContent = `+${extra}`;
-        overflowEl.classList.add("visible");
-      } else {
-        overflowEl.textContent = "";
-        overflowEl.classList.remove("visible");
-      }
-    }
-
-    const faultMarkEl = document.getElementById(`fault-${i}`);
-    if (faultMarkEl) {
-      faultMarkEl.classList.toggle("visible", r.sensor === "FAULT");
-    }
-  });
-}
-
-function renderLiveSim(data) {
-  const junction = document.getElementById("ls-junction");
-  const isMoving = data.phase === "GREEN";
-  junction.classList.toggle("active", isMoving);
-
-  (data.roads || []).forEach((r, i) => {
-    const lane = document.getElementById(`ls-lane-${i}`);
-    if (!lane) return;
-    lane.classList.add(`road-${i}`);
-
-    const vehicles = Math.min(Number(r.vehicles) || 0, MAX_SIM_CARS);
-
-    // Reuse existing car divs where possible, add/remove as needed
-    let cars = lane.querySelectorAll(".sim-car");
-    while (cars.length < MAX_SIM_CARS) {
-      const car = document.createElement("div");
-      car.className = "sim-car";
-      lane.appendChild(car);
-      cars = lane.querySelectorAll(".sim-car");
-    }
-
-    cars.forEach((car, j) => {
-      car.classList.toggle("visible", j < vehicles);
-    });
-  });
-}
-
-function renderSensorHealth(data) {
-  sensorHealthGrid.innerHTML = "";
-  (data.roads || []).forEach((r) => {
-    const item = document.createElement("div");
-    item.className = "sensor-item";
-    item.innerHTML = `
-      <span>${r.name}</span>
-      <span class="pill ${r.sensor}">${r.sensor}</span>
-    `;
-    sensorHealthGrid.appendChild(item);
-  });
-}
-
-function renderEventLog(data) {
-  const events = data.events || [];
-  eventLogList.innerHTML = "";
-  if (events.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "No events yet.";
-    eventLogList.appendChild(li);
-    return;
-  }
-  events.slice().reverse().forEach((e) => {
-    const li = document.createElement("li");
-    li.textContent = e;
-    eventLogList.appendChild(li);
   });
 }
 
