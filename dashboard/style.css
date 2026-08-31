@@ -1,251 +1,234 @@
 :root {
-  --red: #e74c3c;
-  --yellow: #f1c40f;
-  --green: #2ecc71;
-  --bg: #10151c;
-  --card: #1b2330;
-  --text: #e8edf3;
-  --muted: #8a97a8;
+    --bg: #080e17;
+    --panel: #111b29;
+    --panel2: #162235;
+
+    --road: #252f3d;
+    --road-line: #68778c;
+
+    --text: #f1f5f9;
+    --muted: #8d9aab;
+
+    --red: #ff3b30;
+    --yellow: #ffd21c;
+    --green: #20d85a;
+
+    --border: #263449;
 }
 
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
 body {
-  margin: 0;
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  padding: 24px;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
 }
 
-header { text-align: center; margin-bottom: 16px; }
-header h1 { margin: 0; letter-spacing: 1px; }
 
-.mode-banner {
-  max-width: 1000px;
-  margin: 0 auto 12px;
-  text-align: center;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-}
-.mode-banner.mode-adaptive { background: rgba(46,204,113,0.15); color: var(--green); }
-.mode-banner.mode-fallback { background: rgba(231,76,60,0.2); color: var(--red); }
+/* ================= HEADER ================= */
 
-.fault-banner {
-  max-width: 1000px;
-  margin: 0 auto 20px;
-  text-align: center;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(231,76,60,0.15);
-  color: var(--red);
-  font-weight: 600;
-  font-size: 13px;
-}
-.fault-banner.hidden { display: none; }
+.top-header {
+    min-height: 90px;
+    padding: 16px 30px;
 
-#summary {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-.summary-box {
-  background: var(--card);
-  border-radius: 10px;
-  padding: 12px 20px;
-  min-width: 160px;
-  text-align: center;
-}
-.summary-box .label { display: block; font-size: 12px; color: var(--muted); }
-.summary-box .value { display: block; font-size: 20px; font-weight: 700; margin-top: 4px; }
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-#intersection-wrap {
-  max-width: 520px;
-  margin: 0 auto 30px;
-  background: var(--card);
-  border-radius: 12px;
-  padding: 12px;
-}
-#intersection { width: 100%; height: auto; display: block; overflow: visible; }
-#intersection .bulb { fill: #2a3444; transition: fill 0.3s, opacity 0.3s; opacity: 0.35; }
-#intersection .bulb.on.red    { fill: var(--red);    opacity: 1; }
-#intersection .bulb.on.yellow { fill: var(--yellow); opacity: 1; }
-#intersection .bulb.on.green  { fill: var(--green);  opacity: 1; }
-.road-label { font-size: 15px; font-weight: 700; fill: var(--text); }
-.road-count { font-size: 12px; fill: var(--muted); }
-
-.car-icon {
-  fill: #f4b942;
-  stroke: #10151c;
-  stroke-width: 1;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.car-icon.visible { opacity: 1; }
-.car-overflow { font-size: 11px; fill: var(--muted); opacity: 0; transition: opacity 0.2s; }
-.car-overflow.visible { opacity: 1; }
-
-.fault-mark {
-  font-size: 14px;
-  fill: var(--red);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.fault-mark.visible { opacity: 1; }
-
-#roadGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  max-width: 1000px;
-  margin: 0 auto 30px;
+    border-bottom: 1px solid var(--border);
 }
 
-.road-card {
-  background: var(--card);
-  border-radius: 12px;
-  padding: 16px;
-  border-top: 4px solid var(--muted);
-}
-.road-card.signal-RED { border-top-color: var(--red); }
-.road-card.signal-YELLOW { border-top-color: var(--yellow); }
-.road-card.signal-GREEN { border-top-color: var(--green); }
-
-.road-card h3 { margin: 0 0 10px; }
-.road-card .row { display: flex; justify-content: space-between; font-size: 14px; margin: 4px 0; color: var(--muted); }
-.road-card .row span:last-child { color: var(--text); font-weight: 600; }
-
-.pill { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-.pill.RED { background: rgba(231,76,60,0.2); color: var(--red); }
-.pill.YELLOW { background: rgba(241,196,15,0.2); color: var(--yellow); }
-.pill.GREEN { background: rgba(46,204,113,0.2); color: var(--green); }
-.pill.FAULT { background: rgba(231,76,60,0.25); color: var(--red); }
-.pill.NORMAL { background: rgba(46,204,113,0.15); color: var(--green); }
-
-#sensorHealth, #eventLogSection { max-width: 1000px; margin: 0 auto 30px; }
-#sensorHealth h2, #eventLogSection h2, #history h2 { font-size: 16px; margin-bottom: 12px; }
-
-.sensor-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-}
-.sensor-item {
-  background: var(--card);
-  border-radius: 10px;
-  padding: 10px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-#eventLogList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  background: var(--card);
-  border-radius: 10px;
-  overflow: hidden;
-}
-#eventLogList li {
-  padding: 8px 14px;
-  font-size: 13px;
-  color: var(--muted);
-  border-bottom: 1px solid #2a3444;
-}
-#eventLogList li:last-child { border-bottom: none; }
-#eventLogList li:first-child { color: var(--text); }
-
-#history { max-width: 1000px; margin: 0 auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { padding: 6px 10px; border-bottom: 1px solid #2a3444; text-align: center; }
-th { color: var(--muted); font-weight: 600; }
-
-footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }
-#liveSim-wrap { max-width: 700px; margin: 0 auto 30px; }
-#liveSim-wrap h2 { font-size: 16px; margin-bottom: 12px; }
-
-#liveSim {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background: var(--card);
-  border-radius: 12px;
-  padding: 12px;
+.brand h1 {
+    margin: 0;
+    font-size: 25px;
+    letter-spacing: 1px;
 }
 
-.ls-junction {
-  position: absolute;
-  top: 42%; left: 42%;
-  width: 16%; height: 16%;
-  border: 2px solid #4a5568;
-  border-radius: 6px;
-  background: #1b2330;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.ls-junction.active {
-  border-color: var(--green);
-  box-shadow: 0 0 12px rgba(46,204,113,0.5);
+.brand p {
+    margin: 5px 0 0;
+    color: var(--green);
+    font-size: 14px;
 }
 
-.ls-lane {
-  position: absolute;
-  display: flex;
-  gap: 4px;
-  overflow: hidden;
+
+/* Traffic logo */
+
+.traffic-logo {
+    width: 32px;
+    height: 58px;
+
+    padding: 7px;
+
+    background: #172131;
+    border-radius: 8px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.ls-top {
-  top: 6%; left: 44%; width: 12%; height: 34%;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-.ls-bottom {
-  top: 60%; left: 44%; width: 12%; height: 34%;
-  flex-direction: column-reverse;
-  justify-content: flex-end;
-}
-.ls-left {
-  top: 44%; left: 6%; width: 34%; height: 12%;
-  flex-direction: row;
-  justify-content: flex-end;
-}
-.ls-right {
-  top: 44%; left: 60%; width: 34%; height: 12%;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
+.traffic-logo span {
+    width: 13px;
+    height: 13px;
+
+    border-radius: 50%;
+
+    margin: auto;
 }
 
-.sim-car {
-  flex-shrink: 0;
-  border-radius: 3px;
-  opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 0.25s, transform 0.25s;
+.logo-red {
+    background: var(--red);
 }
-.sim-car.visible { opacity: 1; transform: scale(1); }
 
-.ls-top .sim-car, .ls-bottom .sim-car { width: 100%; height: 10px; }
-.ls-left .sim-car, .ls-right .sim-car { height: 100%; width: 10px; }
-
-.ls-lane.road-0 .sim-car { background: #4a90e2; }
-.ls-lane.road-1 .sim-car { background: #f1c40f; }
-.ls-lane.road-2 .sim-car { background: #2ecc71; }
-.ls-lane.road-3 .sim-car { background: #9b59b6; }
-
-.ls-label {
-  position: absolute;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
+.logo-yellow {
+    background: var(--yellow);
 }
-.ls-label-top { top: 2%; left: 50%; transform: translateX(-50%); }
-.ls-label-bottom { bottom: 2%; left: 50%; transform: translateX(-50%); }
-.ls-label-left { left: 2%; top: 50%; transform: translateY(-50%); }
-.ls-label-right { right: 2%; top: 50%; transform: translateY(-50%); }
+
+.logo-green {
+    background: var(--green);
+}
+
+
+/* ================= HEADER INFO ================= */
+
+.system-info {
+    display: flex;
+    gap: 12px;
+}
+
+.info-box {
+    min-width: 140px;
+
+    padding: 10px 14px;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    background: rgba(15, 25, 40, 0.8);
+}
+
+.info-box strong {
+    display: block;
+    font-size: 14px;
+}
+
+.info-box small {
+    display: block;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+.wifi-icon,
+.power-icon {
+    font-size: 25px;
+    color: var(--green);
+}
+
+
+/* ================= DASHBOARD ================= */
+
+.dashboard {
+    padding: 20px;
+
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+
+    max-width: 1550px;
+    margin: auto;
+}
+
+
+/* ================= INTERSECTION ================= */
+
+.intersection-card {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 12px;
+
+    padding: 14px;
+}
+
+
+.intersection {
+    position: relative;
+
+    width: 100%;
+    aspect-ratio: 1.45;
+
+    min-height: 550px;
+
+    overflow: hidden;
+
+    border-radius: 9px;
+
+    background:
+        radial-gradient(circle at 20% 20%, #1d4624 0 12%, transparent 13%),
+        radial-gradient(circle at 85% 25%, #214c28 0 10%, transparent 11%),
+        radial-gradient(circle at 20% 80%, #1d4624 0 12%, transparent 13%),
+        radial-gradient(circle at 85% 80%, #214c28 0 11%, transparent 12%),
+        #13251a;
+}
+
+
+/* Roads */
+
+.road {
+    position: absolute;
+
+    background: var(--road);
+
+    overflow: visible;
+}
+
+
+/* vertical */
+
+.road-top,
+.road-bottom {
+    left: 40%;
+    width: 20%;
+    height: 100%;
+}
+
+
+/* horizontal */
+
+.road-left,
+.road-right {
+    top: 40%;
+    height: 20%;
+    width: 100%;
+}
+
+
+/* lane markings */
+
+.road-top::after,
+.road-bottom::after {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 50%;
+
+    height: 100%;
+    width: 4px;
+
+   
