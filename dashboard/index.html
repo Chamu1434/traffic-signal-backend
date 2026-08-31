@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,9 +12,12 @@
 
 <body>
 
-<header class="top-header">
+<!-- ================= HEADER ================= -->
+
+<header class="header">
 
     <div class="brand">
+
         <div class="traffic-logo">
             <span class="logo-red"></span>
             <span class="logo-yellow"></span>
@@ -24,161 +28,235 @@
             <h1>SMART TRAFFIC SIGNAL</h1>
             <p>Live Traffic Monitoring Dashboard</p>
         </div>
+
     </div>
 
-    <div class="system-info">
 
-        <div class="info-box">
-            <span class="wifi-icon">⌁</span>
+    <div class="header-right">
+
+        <div class="header-box">
+            <span class="header-icon">⌁</span>
+
             <div>
-                <strong id="connectionStatus">Connected</strong>
+                <strong id="connectionStatus">
+                    Connected
+                </strong>
+
                 <small>ESP32</small>
             </div>
         </div>
 
-        <div class="info-box">
-            <span>◷</span>
+
+        <div class="header-box">
+
+            <span class="header-icon">◷</span>
+
             <div>
-                <strong id="clock">--:--:--</strong>
-                <small id="date">--</small>
+                <strong id="clock">
+                    --:--:--
+                </strong>
+
+                <small id="date">
+                    --
+                </small>
             </div>
+
         </div>
 
-        <div class="info-box">
-            <span class="power-icon">◉</span>
+
+        <div class="header-box">
+
+            <span class="header-icon green-text">
+                ◉
+            </span>
+
             <div>
-                <strong>System Active</strong>
-                <small>Adaptive Mode</small>
+
+                <strong class="green-text">
+                    SYSTEM ACTIVE
+                </strong>
+
+                <small>
+                    Adaptive Mode
+                </small>
+
             </div>
+
         </div>
 
     </div>
+
 </header>
 
 
+<!-- ================= FAULT ================= -->
+
 <section id="faultBanner" class="fault-banner hidden">
-    ⚠ Sensor fault detected — system running on fixed-cycle fallback
+
+    ⚠ Sensor fault detected —
+    system running on fixed-cycle fallback
+
 </section>
 
 
-<main class="dashboard">
+<!-- ================= MAIN ================= -->
+
+<main class="main-container">
+
 
     <!-- LEFT SIDE -->
-    <section class="left-column">
+
+    <section class="left-side">
+
+
+        <!-- INTERSECTION -->
 
         <div class="intersection-card">
-
-            <div class="signal-legend">
-                <h3>Signal Status</h3>
-
-                <div>
-                    <span class="legend-dot green"></span>
-                    GREEN - Go
-                </div>
-
-                <div>
-                    <span class="legend-dot red"></span>
-                    RED - Stop
-                </div>
-
-                <div>
-                    <span class="legend-dot yellow"></span>
-                    YELLOW - Wait
-                </div>
-            </div>
-
 
             <div class="intersection">
 
                 <!-- ROAD 1 -->
-                <div class="road road-top" id="roadVisual0">
 
-                    <div class="road-name road-name-top">
+                <div class="road road-top">
+
+                    <div class="road-label top-label">
                         Road 1
                     </div>
 
-                    <div class="cars cars-top" id="cars-0"></div>
+                    <div
+                        id="cars-0"
+                        class="car-container cars-top">
+                    </div>
 
-                    <div class="traffic-light light-top">
+                    <div
+                        id="light-0"
+                        class="traffic-light light-top">
+
                         <span class="bulb red"></span>
                         <span class="bulb yellow"></span>
                         <span class="bulb green"></span>
+
                     </div>
 
-                    <div class="road-count count-top" id="count-0">
+                    <div
+                        id="count-0"
+                        class="road-count count-top">
+
                         0 cars
+
                     </div>
 
                 </div>
+
 
 
                 <!-- ROAD 2 -->
-                <div class="road road-right" id="roadVisual1">
 
-                    <div class="road-name road-name-right">
+                <div class="road road-right">
+
+                    <div class="road-label right-label">
                         Road 2
                     </div>
 
-                    <div class="cars cars-right" id="cars-1"></div>
+                    <div
+                        id="cars-1"
+                        class="car-container cars-right">
+                    </div>
 
-                    <div class="traffic-light light-right">
+                    <div
+                        id="light-1"
+                        class="traffic-light light-right">
+
                         <span class="bulb red"></span>
                         <span class="bulb yellow"></span>
                         <span class="bulb green"></span>
+
                     </div>
 
-                    <div class="road-count count-right" id="count-1">
+                    <div
+                        id="count-1"
+                        class="road-count count-right">
+
                         0 cars
+
                     </div>
 
                 </div>
+
 
 
                 <!-- ROAD 3 -->
-                <div class="road road-bottom" id="roadVisual2">
 
-                    <div class="road-name road-name-bottom">
+                <div class="road road-bottom">
+
+                    <div class="road-label bottom-label">
                         Road 3
                     </div>
 
-                    <div class="cars cars-bottom" id="cars-2"></div>
+                    <div
+                        id="cars-2"
+                        class="car-container cars-bottom">
+                    </div>
 
-                    <div class="traffic-light light-bottom">
+                    <div
+                        id="light-2"
+                        class="traffic-light light-bottom">
+
                         <span class="bulb red"></span>
                         <span class="bulb yellow"></span>
                         <span class="bulb green"></span>
+
                     </div>
 
-                    <div class="road-count count-bottom" id="count-2">
+                    <div
+                        id="count-2"
+                        class="road-count count-bottom">
+
                         0 cars
+
                     </div>
 
                 </div>
+
 
 
                 <!-- ROAD 4 -->
-                <div class="road road-left" id="roadVisual3">
 
-                    <div class="road-name road-name-left">
+                <div class="road road-left">
+
+                    <div class="road-label left-label">
                         Road 4
                     </div>
 
-                    <div class="cars cars-left" id="cars-3"></div>
+                    <div
+                        id="cars-3"
+                        class="car-container cars-left">
+                    </div>
 
-                    <div class="traffic-light light-left">
+                    <div
+                        id="light-3"
+                        class="traffic-light light-left">
+
                         <span class="bulb red"></span>
                         <span class="bulb yellow"></span>
                         <span class="bulb green"></span>
+
                     </div>
 
-                    <div class="road-count count-left" id="count-3">
+                    <div
+                        id="count-3"
+                        class="road-count count-left">
+
                         0 cars
+
                     </div>
 
                 </div>
 
 
+
                 <!-- CENTER -->
+
                 <div class="junction">
 
                     <div class="junction-text">
@@ -193,29 +271,66 @@
         </div>
 
 
+
         <!-- SYSTEM STATUS -->
-        <div class="bottom-card system-card">
+
+        <div class="bottom-card">
 
             <h2>SYSTEM STATUS</h2>
 
             <div class="status-row">
-                <span>◉ Connection</span>
-                <strong id="systemConnection">Connected</strong>
+
+                <span>
+                    ◉ Connection
+                </span>
+
+                <strong
+                    id="systemConnection"
+                    class="green-text">
+
+                    Connected
+
+                </strong>
+
             </div>
 
-            <div class="status-row">
-                <span>⚙ Mode</span>
-                <strong id="systemMode">Adaptive</strong>
-            </div>
 
             <div class="status-row">
-                <span>◷ Uptime</span>
-                <strong id="uptime">--</strong>
+
+                <span>
+                    ⚙ Mode
+                </span>
+
+                <strong id="systemMode">
+                    Adaptive
+                </strong>
+
             </div>
 
+
             <div class="status-row">
-                <span>↻ Last Update</span>
-                <strong id="lastUpdate">Just now</strong>
+
+                <span>
+                    ◷ Uptime
+                </span>
+
+                <strong id="uptime">
+                    --
+                </strong>
+
+            </div>
+
+
+            <div class="status-row">
+
+                <span>
+                    ↻ Last Update
+                </span>
+
+                <strong id="lastUpdate">
+                    Just now
+                </strong>
+
             </div>
 
         </div>
@@ -223,43 +338,64 @@
     </section>
 
 
-    <!-- RIGHT SIDE -->
-    <section class="right-column">
 
-        <div id="roadGrid" class="road-grid"></div>
+    <!-- RIGHT SIDE -->
+
+    <section class="right-side">
+
+        <div id="roadGrid"></div>
 
     </section>
 
 </main>
 
 
-<!-- EVENT LOG -->
-<section class="bottom-section">
 
-    <div class="large-card">
+<!-- ================= BOTTOM ================= -->
 
-        <h2>RECENT EVENTS</h2>
+<section class="bottom-grid">
+
+
+    <!-- EVENTS -->
+
+    <div class="bottom-panel">
+
+        <h2>
+            RECENT EVENTS
+        </h2>
 
         <ul id="eventLogList"></ul>
 
     </div>
 
 
-    <div class="large-card">
 
-        <h2>TRAFFIC HISTORY</h2>
+    <!-- HISTORY -->
+
+    <div class="bottom-panel">
+
+        <h2>
+            TRAFFIC HISTORY
+            <span class="small-title">
+                (Last 20 Changes)
+            </span>
+        </h2>
 
         <table id="historyTable">
 
             <thead>
+
                 <tr>
+
                     <th>Time</th>
                     <th>Road 1</th>
                     <th>Road 2</th>
                     <th>Road 3</th>
                     <th>Road 4</th>
                     <th>Green</th>
+
                 </tr>
+
             </thead>
 
             <tbody></tbody>
@@ -271,12 +407,22 @@
 </section>
 
 
+
 <footer>
-    Smart Traffic Signal System | ESP32 | Wokwi | Adaptive Traffic Control
+
+    Smart Traffic Signal System
+    |
+    ESP32
+    |
+    Wokwi
+    |
+    Adaptive Traffic Control
+
 </footer>
 
 
 <script src="script.js"></script>
 
 </body>
+
 </html>
