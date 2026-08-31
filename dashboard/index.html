@@ -1,161 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Intelligent Traffic Monitor</title>
-<link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Traffic Signal</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <header>
-    <h1>INTELLIGENT TRAFFIC MONITOR</h1>
-  </header>
 
-  <section id="modeBanner" class="mode-banner mode-adaptive">
-    <span id="modeText">SYSTEM MODE: ADAPTIVE</span>
-  </section>
+<header class="top-header">
 
-  <section id="faultBanner" class="fault-banner hidden">
+    <div class="brand">
+        <div class="traffic-logo">
+            <span class="logo-red"></span>
+            <span class="logo-yellow"></span>
+            <span class="logo-green"></span>
+        </div>
+
+        <div>
+            <h1>SMART TRAFFIC SIGNAL</h1>
+            <p>Live Traffic Monitoring Dashboard</p>
+        </div>
+    </div>
+
+    <div class="system-info">
+
+        <div class="info-box">
+            <span class="wifi-icon">⌁</span>
+            <div>
+                <strong id="connectionStatus">Connected</strong>
+                <small>ESP32</small>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <span>◷</span>
+            <div>
+                <strong id="clock">--:--:--</strong>
+                <small id="date">--</small>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <span class="power-icon">◉</span>
+            <div>
+                <strong>System Active</strong>
+                <small>Adaptive Mode</small>
+            </div>
+        </div>
+
+    </div>
+</header>
+
+
+<section id="faultBanner" class="fault-banner hidden">
     ⚠ Sensor fault detected — system running on fixed-cycle fallback
-  </section>
+</section>
 
-  <section id="summary">
-    <div class="summary-box">
-      <span class="label">Current Green Road</span>
-      <span id="currentGreen" class="value">-</span>
+
+<main class="dashboard">
+
+    <!-- LEFT SIDE -->
+    <section class="left-column">
+
+        <div class="intersection-card">
+
+            <div class="signal-legend">
+                <h3>Signal Status</h3>
+
+                <div>
+                    <span class="legend-dot green"></span>
+                    GREEN - Go
+                </div>
+
+                <div>
+                    <span class="legend-dot red"></span>
+                    RED - Stop
+                </div>
+
+                <div>
+                    <span class="legend-dot yellow"></span>
+                    YELLOW - Wait
+                </div>
+            </div>
+
+
+            <div class="intersection">
+
+                <!-- ROAD 1 -->
+                <div class="road road-top" id="roadVisual0">
+
+                    <div class="road-name road-name-top">
+                        Road 1
+                    </div>
+
+                    <div class="cars cars-top" id="cars-0"></div>
+
+                    <div class="traffic-light light-top">
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
+                    </div>
+
+                    <div class="road-count count-top" id="count-0">
+                        0 cars
+                    </div>
+
+                </div>
+
+
+                <!-- ROAD 2 -->
+                <div class="road road-right" id="roadVisual1">
+
+                    <div class="road-name road-name-right">
+                        Road 2
+                    </div>
+
+                    <div class="cars cars-right" id="cars-1"></div>
+
+                    <div class="traffic-light light-right">
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
+                    </div>
+
+                    <div class="road-count count-right" id="count-1">
+                        0 cars
+                    </div>
+
+                </div>
+
+
+                <!-- ROAD 3 -->
+                <div class="road road-bottom" id="roadVisual2">
+
+                    <div class="road-name road-name-bottom">
+                        Road 3
+                    </div>
+
+                    <div class="cars cars-bottom" id="cars-2"></div>
+
+                    <div class="traffic-light light-bottom">
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
+                    </div>
+
+                    <div class="road-count count-bottom" id="count-2">
+                        0 cars
+                    </div>
+
+                </div>
+
+
+                <!-- ROAD 4 -->
+                <div class="road road-left" id="roadVisual3">
+
+                    <div class="road-name road-name-left">
+                        Road 4
+                    </div>
+
+                    <div class="cars cars-left" id="cars-3"></div>
+
+                    <div class="traffic-light light-left">
+                        <span class="bulb red"></span>
+                        <span class="bulb yellow"></span>
+                        <span class="bulb green"></span>
+                    </div>
+
+                    <div class="road-count count-left" id="count-3">
+                        0 cars
+                    </div>
+
+                </div>
+
+
+                <!-- CENTER -->
+                <div class="junction">
+
+                    <div class="junction-text">
+                        SMART<br>
+                        TRAFFIC
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SYSTEM STATUS -->
+        <div class="bottom-card system-card">
+
+            <h2>SYSTEM STATUS</h2>
+
+            <div class="status-row">
+                <span>◉ Connection</span>
+                <strong id="systemConnection">Connected</strong>
+            </div>
+
+            <div class="status-row">
+                <span>⚙ Mode</span>
+                <strong id="systemMode">Adaptive</strong>
+            </div>
+
+            <div class="status-row">
+                <span>◷ Uptime</span>
+                <strong id="uptime">--</strong>
+            </div>
+
+            <div class="status-row">
+                <span>↻ Last Update</span>
+                <strong id="lastUpdate">Just now</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RIGHT SIDE -->
+    <section class="right-column">
+
+        <div id="roadGrid" class="road-grid"></div>
+
+    </section>
+
+</main>
+
+
+<!-- EVENT LOG -->
+<section class="bottom-section">
+
+    <div class="large-card">
+
+        <h2>RECENT EVENTS</h2>
+
+        <ul id="eventLogList"></ul>
+
     </div>
-    <div class="summary-box">
-      <span class="label">Phase</span>
-      <span id="currentPhase" class="value">-</span>
+
+
+    <div class="large-card">
+
+        <h2>TRAFFIC HISTORY</h2>
+
+        <table id="historyTable">
+
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Road 1</th>
+                    <th>Road 2</th>
+                    <th>Road 3</th>
+                    <th>Road 4</th>
+                    <th>Green</th>
+                </tr>
+            </thead>
+
+            <tbody></tbody>
+
+        </table>
+
     </div>
-    <div class="summary-box">
-      <span class="label">Last Update</span>
-      <span id="lastUpdate" class="value">-</span>
-    </div>
-  </section>
 
-  <section id="intersection-wrap">
-    <svg id="intersection" viewBox="0 0 520 520" role="img" aria-label="Live intersection view">
-      <rect x="0" y="0" width="520" height="520" fill="var(--bg)" />
-      <rect x="0" y="210" width="520" height="100" fill="#33404f" />
-      <rect x="210" y="0" width="100" height="520" fill="#33404f" />
-      <g stroke="#5a6577" stroke-width="4" stroke-dasharray="16 12">
-        <line x1="0" y1="260" x2="195" y2="260" />
-        <line x1="325" y1="260" x2="520" y2="260" />
-        <line x1="260" y1="0" x2="260" y2="195" />
-        <line x1="260" y1="325" x2="260" y2="520" />
-      </g>
+</section>
 
-      <g id="light-road-0" transform="translate(196,120)">
-        <rect x="-16" y="0" width="32" height="70" rx="6" fill="#1b2330" />
-        <circle class="bulb red"    cx="0" cy="16" r="8" />
-        <circle class="bulb yellow" cx="0" cy="35" r="8" />
-        <circle class="bulb green"  cx="0" cy="54" r="8" />
-        <rect class="car-icon" id="car-0-0" x="-11" y="-14" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-0-1" x="-11" y="-30" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-0-2" x="-11" y="-46" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-0-3" x="-11" y="-62" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-0-4" x="-11" y="-78" width="22" height="12" rx="3" />
-        <text class="car-overflow" id="overflow-0" x="0" y="-92" text-anchor="middle"></text>
-        <text class="fault-mark" id="fault-0" x="0" y="82" text-anchor="middle">⚠</text>
-      </g>
-      <text class="road-label" x="196" y="105" text-anchor="middle">Road 1</text>
-      <text class="road-count" id="count-0" x="196" y="205" text-anchor="middle">0 waiting</text>
 
-      <g id="light-road-1" transform="translate(330,196) rotate(90)">
-        <rect x="-16" y="0" width="32" height="70" rx="6" fill="#1b2330" />
-        <circle class="bulb red"    cx="0" cy="16" r="8" />
-        <circle class="bulb yellow" cx="0" cy="35" r="8" />
-        <circle class="bulb green"  cx="0" cy="54" r="8" />
-        <rect class="car-icon" id="car-1-0" x="-11" y="-14" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-1-1" x="-11" y="-30" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-1-2" x="-11" y="-46" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-1-3" x="-11" y="-62" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-1-4" x="-11" y="-78" width="22" height="12" rx="3" />
-        <text class="car-overflow" id="overflow-1" x="0" y="-92" text-anchor="middle"></text>
-        <text class="fault-mark" id="fault-1" x="0" y="82" text-anchor="middle" transform="rotate(-90)">⚠</text>
-      </g>
-      <text class="road-label" x="415" y="180" text-anchor="middle">Road 2</text>
-      <text class="road-count" id="count-1" x="415" y="322" text-anchor="middle">0 waiting</text>
+<footer>
+    Smart Traffic Signal System | ESP32 | Wokwi | Adaptive Traffic Control
+</footer>
 
-      <g id="light-road-2" transform="translate(324,400) rotate(180)">
-        <rect x="-16" y="0" width="32" height="70" rx="6" fill="#1b2330" />
-        <circle class="bulb red"    cx="0" cy="16" r="8" />
-        <circle class="bulb yellow" cx="0" cy="35" r="8" />
-        <circle class="bulb green"  cx="0" cy="54" r="8" />
-        <rect class="car-icon" id="car-2-0" x="-11" y="-14" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-2-1" x="-11" y="-30" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-2-2" x="-11" y="-46" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-2-3" x="-11" y="-62" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-2-4" x="-11" y="-78" width="22" height="12" rx="3" />
-        <text class="car-overflow" id="overflow-2" x="0" y="-92" text-anchor="middle"></text>
-        <text class="fault-mark" id="fault-2" x="0" y="82" text-anchor="middle" transform="rotate(180)">⚠</text>
-      </g>
-      <text class="road-label" x="324" y="435" text-anchor="middle">Road 3</text>
-      <text class="road-count" id="count-2" x="324" y="300" text-anchor="middle">0 waiting</text>
 
-      <g id="light-road-3" transform="translate(190,324) rotate(-90)">
-        <rect x="-16" y="0" width="32" height="70" rx="6" fill="#1b2330" />
-        <circle class="bulb red"    cx="0" cy="16" r="8" />
-        <circle class="bulb yellow" cx="0" cy="35" r="8" />
-        <circle class="bulb green"  cx="0" cy="54" r="8" />
-        <rect class="car-icon" id="car-3-0" x="-11" y="-14" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-3-1" x="-11" y="-30" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-3-2" x="-11" y="-46" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-3-3" x="-11" y="-62" width="22" height="12" rx="3" />
-        <rect class="car-icon" id="car-3-4" x="-11" y="-78" width="22" height="12" rx="3" />
-        <text class="car-overflow" id="overflow-3" x="0" y="-92" text-anchor="middle"></text>
-        <text class="fault-mark" id="fault-3" x="0" y="82" text-anchor="middle" transform="rotate(90)">⚠</text>
-      </g>
-      <text class="road-label" x="105" y="340" text-anchor="middle">Road 4</text>
-      <text class="road-count" id="count-3" x="105" y="218" text-anchor="middle">0 waiting</text>
-    </svg>
-  </section>
+<script src="script.js"></script>
 
-    <section id="liveSim-wrap">
-    <h2>Live Simulation</h2>
-    <div id="liveSim">
-      <div class="ls-junction" id="ls-junction"></div>
-
-      <div class="ls-lane ls-top" id="ls-lane-0"></div>
-      <div class="ls-lane ls-right" id="ls-lane-1"></div>
-      <div class="ls-lane ls-bottom" id="ls-lane-2"></div>
-      <div class="ls-lane ls-left" id="ls-lane-3"></div>
-
-      <div class="ls-label ls-label-top">Road 1</div>
-      <div class="ls-label ls-label-right">Road 2</div>
-      <div class="ls-label ls-label-bottom">Road 3</div>
-      <div class="ls-label ls-label-left">Road 4</div>
-    </div>
-  </section>
-
-  <main id="roadGrid"></main>
-
-  <section id="sensorHealth">
-    <h2>Sensor Health</h2>
-    <div id="sensorHealthGrid" class="sensor-grid"></div>
-  </section>
-
-  <section id="eventLogSection">
-    <h2>Event Log</h2>
-    <ul id="eventLogList"></ul>
-  </section>
-
-  <section id="history">
-    <h2>Traffic History (last 20 updates)</h2>
-    <table id="historyTable">
-      <thead>
-        <tr><th>Time</th><th>Road 1</th><th>Road 2</th><th>Road 3</th><th>Road 4</th><th>Green</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
-
-  <footer>
-    Data is POSTed by the simulated ESP32 (Wokwi) over WiFi/HTTP to your
-    backend, which pushes it here over WebSocket in real time. This page
-    runs in your browser, not inside Wokwi.
-  </footer>
-
-  <script src="script.js"></script>
 </body>
 </html>
