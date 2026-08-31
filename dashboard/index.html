@@ -1,428 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Smart Traffic Signal</title>
-
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<title>Intelligent Traffic Monitor</title>
+<link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <header>
+    <h1>INTELLIGENT TRAFFIC MONITOR</h1>
+    <div id="connectionStatus" class="status disconnected">Connecting to broker...</div>
+  </header>
 
-<!-- ================= HEADER ================= -->
-
-<header class="header">
-
-    <div class="brand">
-
-        <div class="traffic-logo">
-            <span class="logo-red"></span>
-            <span class="logo-yellow"></span>
-            <span class="logo-green"></span>
-        </div>
-
-        <div>
-            <h1>SMART TRAFFIC SIGNAL</h1>
-            <p>Live Traffic Monitoring Dashboard</p>
-        </div>
-
+  <section id="summary">
+    <div class="summary-box">
+      <span class="label">Current Green Road</span>
+      <span id="currentGreen" class="value">-</span>
     </div>
-
-
-    <div class="header-right">
-
-        <div class="header-box">
-            <span class="header-icon">⌁</span>
-
-            <div>
-                <strong id="connectionStatus">
-                    Connected
-                </strong>
-
-                <small>ESP32</small>
-            </div>
-        </div>
-
-
-        <div class="header-box">
-
-            <span class="header-icon">◷</span>
-
-            <div>
-                <strong id="clock">
-                    --:--:--
-                </strong>
-
-                <small id="date">
-                    --
-                </small>
-            </div>
-
-        </div>
-
-
-        <div class="header-box">
-
-            <span class="header-icon green-text">
-                ◉
-            </span>
-
-            <div>
-
-                <strong class="green-text">
-                    SYSTEM ACTIVE
-                </strong>
-
-                <small>
-                    Adaptive Mode
-                </small>
-
-            </div>
-
-        </div>
-
+    <div class="summary-box">
+      <span class="label">Phase</span>
+      <span id="currentPhase" class="value">-</span>
     </div>
-
-</header>
-
-
-<!-- ================= FAULT ================= -->
-
-<section id="faultBanner" class="fault-banner hidden">
-
-    ⚠ Sensor fault detected —
-    system running on fixed-cycle fallback
-
-</section>
-
-
-<!-- ================= MAIN ================= -->
-
-<main class="main-container">
-
-
-    <!-- LEFT SIDE -->
-
-    <section class="left-side">
-
-
-        <!-- INTERSECTION -->
-
-        <div class="intersection-card">
-
-            <div class="intersection">
-
-                <!-- ROAD 1 -->
-
-                <div class="road road-top">
-
-                    <div class="road-label top-label">
-                        Road 1
-                    </div>
-
-                    <div
-                        id="cars-0"
-                        class="car-container cars-top">
-                    </div>
-
-                    <div
-                        id="light-0"
-                        class="traffic-light light-top">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-0"
-                        class="road-count count-top">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- ROAD 2 -->
-
-                <div class="road road-right">
-
-                    <div class="road-label right-label">
-                        Road 2
-                    </div>
-
-                    <div
-                        id="cars-1"
-                        class="car-container cars-right">
-                    </div>
-
-                    <div
-                        id="light-1"
-                        class="traffic-light light-right">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-1"
-                        class="road-count count-right">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- ROAD 3 -->
-
-                <div class="road road-bottom">
-
-                    <div class="road-label bottom-label">
-                        Road 3
-                    </div>
-
-                    <div
-                        id="cars-2"
-                        class="car-container cars-bottom">
-                    </div>
-
-                    <div
-                        id="light-2"
-                        class="traffic-light light-bottom">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-2"
-                        class="road-count count-bottom">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- ROAD 4 -->
-
-                <div class="road road-left">
-
-                    <div class="road-label left-label">
-                        Road 4
-                    </div>
-
-                    <div
-                        id="cars-3"
-                        class="car-container cars-left">
-                    </div>
-
-                    <div
-                        id="light-3"
-                        class="traffic-light light-left">
-
-                        <span class="bulb red"></span>
-                        <span class="bulb yellow"></span>
-                        <span class="bulb green"></span>
-
-                    </div>
-
-                    <div
-                        id="count-3"
-                        class="road-count count-left">
-
-                        0 cars
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- CENTER -->
-
-                <div class="junction">
-
-                    <div class="junction-text">
-                        SMART<br>
-                        TRAFFIC
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- SYSTEM STATUS -->
-
-        <div class="bottom-card">
-
-            <h2>SYSTEM STATUS</h2>
-
-            <div class="status-row">
-
-                <span>
-                    ◉ Connection
-                </span>
-
-                <strong
-                    id="systemConnection"
-                    class="green-text">
-
-                    Connected
-
-                </strong>
-
-            </div>
-
-
-            <div class="status-row">
-
-                <span>
-                    ⚙ Mode
-                </span>
-
-                <strong id="systemMode">
-                    Adaptive
-                </strong>
-
-            </div>
-
-
-            <div class="status-row">
-
-                <span>
-                    ◷ Uptime
-                </span>
-
-                <strong id="uptime">
-                    --
-                </strong>
-
-            </div>
-
-
-            <div class="status-row">
-
-                <span>
-                    ↻ Last Update
-                </span>
-
-                <strong id="lastUpdate">
-                    Just now
-                </strong>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- RIGHT SIDE -->
-
-    <section class="right-side">
-
-        <div id="roadGrid"></div>
-
-    </section>
-
-</main>
-
-
-
-<!-- ================= BOTTOM ================= -->
-
-<section class="bottom-grid">
-
-
-    <!-- EVENTS -->
-
-    <div class="bottom-panel">
-
-        <h2>
-            RECENT EVENTS
-        </h2>
-
-        <ul id="eventLogList"></ul>
-
+    <div class="summary-box">
+      <span class="label">Last Update</span>
+      <span id="lastUpdate" class="value">-</span>
     </div>
+  </section>
 
+  <main id="roadGrid"></main>
 
+  <section id="history">
+    <h2>Traffic History (last 20 updates)</h2>
+    <table id="historyTable">
+      <thead>
+        <tr><th>Time</th><th>Road 1</th><th>Road 2</th><th>Road 3</th><th>Road 4</th><th>Green</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-    <!-- HISTORY -->
+  <footer>
+    Data is POSTed by the simulated ESP32 (Wokwi) over WiFi/HTTP to your
+    backend, which pushes it here over WebSocket in real time. This page
+    runs in your browser, not inside Wokwi.
+  </footer>
 
-    <div class="bottom-panel">
-
-        <h2>
-            TRAFFIC HISTORY
-            <span class="small-title">
-                (Last 20 Changes)
-            </span>
-        </h2>
-
-        <table id="historyTable">
-
-            <thead>
-
-                <tr>
-
-                    <th>Time</th>
-                    <th>Road 1</th>
-                    <th>Road 2</th>
-                    <th>Road 3</th>
-                    <th>Road 4</th>
-                    <th>Green</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody></tbody>
-
-        </table>
-
-    </div>
-
-</section>
-
-
-
-<footer>
-
-    Smart Traffic Signal System
-    |
-    ESP32
-    |
-    Wokwi
-    |
-    Adaptive Traffic Control
-
-</footer>
-
-
-<script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
-
 </html>
