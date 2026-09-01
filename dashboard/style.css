@@ -18,18 +18,23 @@ body {
   padding: 24px;
 }
 
-header { text-align: center; margin-bottom: 20px; }
-header h1 { margin: 0 0 8px; letter-spacing: 1px; }
+header { text-align: center; margin-bottom: 16px; }
+header h1 { margin: 0; letter-spacing: 1px; }
 
-.status {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 999px;
-  font-size: 13px;
+.fault-banner {
+  max-width: 520px;
+  margin: 0 auto 20px;
+  background: rgba(231,76,60,0.15);
+  border: 1px solid var(--red);
+  color: var(--red);
+  text-align: center;
+  padding: 12px 16px;
+  border-radius: 10px;
   font-weight: 600;
+  font-size: 14px;
+  line-height: 1.5;
 }
-.status.connected { background: rgba(46,204,113,0.15); color: var(--green); }
-.status.disconnected { background: rgba(231,76,60,0.15); color: var(--red); }
+.fault-banner.hidden { display: none; }
 
 #summary {
   display: flex;
@@ -47,6 +52,8 @@ header h1 { margin: 0 0 8px; letter-spacing: 1px; }
 }
 .summary-box .label { display: block; font-size: 12px; color: var(--muted); }
 .summary-box .value { display: block; font-size: 20px; font-weight: 700; margin-top: 4px; }
+.summary-box .value.mode-fallback { color: var(--red); }
+.summary-box .value.mode-adaptive { color: var(--green); }
 
 #intersection-wrap {
   max-width: 520px;
@@ -55,7 +62,7 @@ header h1 { margin: 0 0 8px; letter-spacing: 1px; }
   border-radius: 12px;
   padding: 12px;
 }
-#intersection { width: 100%; height: auto; display: block; }
+#intersection { width: 100%; height: auto; display: block; overflow: visible; }
 #intersection .bulb { fill: #2a3444; transition: fill 0.3s, opacity 0.3s; opacity: 0.35; }
 #intersection .bulb.on.red    { fill: var(--red);    opacity: 1; }
 #intersection .bulb.on.yellow { fill: var(--yellow); opacity: 1; }
@@ -63,12 +70,62 @@ header h1 { margin: 0 0 8px; letter-spacing: 1px; }
 .road-label { font-size: 15px; font-weight: 700; fill: var(--text); }
 .road-count { font-size: 12px; fill: var(--muted); }
 
+/* Cars queued on the road pavement, in-lane, behind the stop line */
+.car-icon {
+  fill: #f4b942;
+  stroke: #10151c;
+  stroke-width: 1;
+  opacity: 0;
+}
+.car-icon.visible { opacity: 1; }
+
+/* Only the currently-green road's cars animate forward through the
+   intersection; every other road's cars stay fully static (stopped). */
+.car-icon.visible.moving {
+  animation-duration: 1.1s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+.car-icon.dir-down.moving  { animation-name: drive-down; }
+.car-icon.dir-up.moving    { animation-name: drive-up; }
+.car-icon.dir-left.moving  { animation-name: drive-left; }
+.car-icon.dir-right.moving { animation-name: drive-right; }
+
+@keyframes drive-down  { 0% { transform: translateY(0);   opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(50px);  opacity: 0; } }
+@keyframes drive-up    { 0% { transform: translateY(0);   opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
+@keyframes drive-left  { 0% { transform: translateX(0);   opacity: 1; } 75% { opacity: 1; } 100% { transform: translateX(-50px); opacity: 0; } }
+@keyframes drive-right { 0% { transform: translateX(0);   opacity: 1; } 75% { opacity: 1; } 100% { transform: translateX(50px);  opacity: 0; } }
+
+.car-overflow { font-size: 11px; fill: var(--muted); opacity: 0; transition: opacity 0.2s; }
+.car-overflow.visible { opacity: 1; }
+
+#sensorHealth, #eventLog { max-width: 1000px; margin: 0 auto 24px; }
+#sensorHealth h2, #eventLog h2, #history h2 { font-size: 15px; color: var(--muted); margin: 0 0 10px; }
+
+#sensorHealthGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.sensor-pill {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.sensor-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.sensor-dot.NORMAL { background: var(--green); }
+.sensor-dot.FAULT { background: var(--red); }
+
 #roadGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   max-width: 1000px;
-  margin: 0 auto 30px;
+  margin: 0 auto 24px;
 }
 
 .road-card {
@@ -91,6 +148,24 @@ header h1 { margin: 0 0 8px; letter-spacing: 1px; }
 .pill.GREEN { background: rgba(46,204,113,0.2); color: var(--green); }
 .pill.FAULT { background: rgba(231,76,60,0.25); color: var(--red); }
 .pill.NORMAL { background: rgba(46,204,113,0.15); color: var(--green); }
+
+#eventLogList {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+#eventLogList li {
+  padding: 5px 0;
+  border-bottom: 1px solid #2a3444;
+  color: var(--muted);
+}
+#eventLogList li:last-child { border-bottom: none; }
+#eventLogList li:first-child { color: var(--text); font-weight: 600; }
 
 #history { max-width: 1000px; margin: 0 auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
