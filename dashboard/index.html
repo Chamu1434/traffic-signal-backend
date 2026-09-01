@@ -8,8 +8,12 @@
 <body>
   <header>
     <h1>INTELLIGENT TRAFFIC MONITOR</h1>
-    <div id="connectionStatus" class="status disconnected">Connecting to broker...</div>
   </header>
+
+  <div id="faultBanner" class="fault-banner hidden">
+    ⚠ SENSOR FAULT DETECTED<br>
+    Adaptive priority temporarily disabled. Fixed-time fallback activated.
+  </div>
 
   <section id="summary">
     <div class="summary-box">
@@ -19,6 +23,10 @@
     <div class="summary-box">
       <span class="label">Phase</span>
       <span id="currentPhase" class="value">-</span>
+    </div>
+    <div class="summary-box">
+      <span class="label">System Mode</span>
+      <span id="systemMode" class="value">-</span>
     </div>
     <div class="summary-box">
       <span class="label">Last Update</span>
@@ -37,7 +45,15 @@
         <line x1="260" y1="0" x2="260" y2="195" />
         <line x1="260" y1="325" x2="260" y2="520" />
       </g>
+      <!-- stop lines -->
+      <g stroke="#e8edf3" stroke-width="3" opacity="0.5">
+        <line x1="210" y1="205" x2="260" y2="205" />
+        <line x1="315" y1="235" x2="315" y2="285" />
+        <line x1="260" y1="315" x2="310" y2="315" />
+        <line x1="205" y1="235" x2="205" y2="285" />
+      </g>
 
+      <!-- Traffic light poles (beside the road at each approach) -->
       <g id="light-road-0" transform="translate(196,120)">
         <rect x="-16" y="0" width="32" height="70" rx="6" fill="#1b2330" />
         <circle class="bulb red"    cx="0" cy="16" r="8" />
@@ -73,10 +89,52 @@
       </g>
       <text class="road-label" x="105" y="340" text-anchor="middle">Road 4</text>
       <text class="road-count" id="count-3" x="105" y="218" text-anchor="middle">0 waiting</text>
+
+      <!-- Road 1 queue: top approach, travels DOWN into the intersection -->
+      <rect class="car-icon dir-down" id="car-0-0" x="251" y="179" width="18" height="26" rx="3" style="animation-delay:0ms"/>
+      <rect class="car-icon dir-down" id="car-0-1" x="251" y="149" width="18" height="26" rx="3" style="animation-delay:150ms"/>
+      <rect class="car-icon dir-down" id="car-0-2" x="251" y="119" width="18" height="26" rx="3" style="animation-delay:300ms"/>
+      <rect class="car-icon dir-down" id="car-0-3" x="251" y="89"  width="18" height="26" rx="3" style="animation-delay:450ms"/>
+      <rect class="car-icon dir-down" id="car-0-4" x="251" y="59"  width="18" height="26" rx="3" style="animation-delay:600ms"/>
+      <text class="car-overflow" id="overflow-0" x="260" y="50" text-anchor="middle"></text>
+
+      <!-- Road 2 queue: right approach, travels LEFT into the intersection -->
+      <rect class="car-icon dir-left" id="car-1-0" x="315" y="251" width="26" height="18" rx="3" style="animation-delay:0ms"/>
+      <rect class="car-icon dir-left" id="car-1-1" x="345" y="251" width="26" height="18" rx="3" style="animation-delay:150ms"/>
+      <rect class="car-icon dir-left" id="car-1-2" x="375" y="251" width="26" height="18" rx="3" style="animation-delay:300ms"/>
+      <rect class="car-icon dir-left" id="car-1-3" x="405" y="251" width="26" height="18" rx="3" style="animation-delay:450ms"/>
+      <rect class="car-icon dir-left" id="car-1-4" x="435" y="251" width="26" height="18" rx="3" style="animation-delay:600ms"/>
+      <text class="car-overflow" id="overflow-1" x="470" y="264" text-anchor="middle"></text>
+
+      <!-- Road 3 queue: bottom approach, travels UP into the intersection -->
+      <rect class="car-icon dir-up" id="car-2-0" x="251" y="315" width="18" height="26" rx="3" style="animation-delay:0ms"/>
+      <rect class="car-icon dir-up" id="car-2-1" x="251" y="345" width="18" height="26" rx="3" style="animation-delay:150ms"/>
+      <rect class="car-icon dir-up" id="car-2-2" x="251" y="375" width="18" height="26" rx="3" style="animation-delay:300ms"/>
+      <rect class="car-icon dir-up" id="car-2-3" x="251" y="405" width="18" height="26" rx="3" style="animation-delay:450ms"/>
+      <rect class="car-icon dir-up" id="car-2-4" x="251" y="435" width="18" height="26" rx="3" style="animation-delay:600ms"/>
+      <text class="car-overflow" id="overflow-2" x="260" y="480" text-anchor="middle"></text>
+
+      <!-- Road 4 queue: left approach, travels RIGHT into the intersection -->
+      <rect class="car-icon dir-right" id="car-3-0" x="161" y="251" width="26" height="18" rx="3" style="animation-delay:0ms"/>
+      <rect class="car-icon dir-right" id="car-3-1" x="131" y="251" width="26" height="18" rx="3" style="animation-delay:150ms"/>
+      <rect class="car-icon dir-right" id="car-3-2" x="101" y="251" width="26" height="18" rx="3" style="animation-delay:300ms"/>
+      <rect class="car-icon dir-right" id="car-3-3" x="71"  y="251" width="26" height="18" rx="3" style="animation-delay:450ms"/>
+      <rect class="car-icon dir-right" id="car-3-4" x="41"  y="251" width="26" height="18" rx="3" style="animation-delay:600ms"/>
+      <text class="car-overflow" id="overflow-3" x="50" y="264" text-anchor="middle"></text>
     </svg>
   </section>
 
+  <section id="sensorHealth">
+    <h2>Sensor Health</h2>
+    <div id="sensorHealthGrid"></div>
+  </section>
+
   <main id="roadGrid"></main>
+
+  <section id="eventLog">
+    <h2>Event Log</h2>
+    <ul id="eventLogList"></ul>
+  </section>
 
   <section id="history">
     <h2>Traffic History (last 20 updates)</h2>
